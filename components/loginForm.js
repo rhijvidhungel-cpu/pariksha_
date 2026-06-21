@@ -15,7 +15,8 @@ const LoginForm = () => {
         e.preventDefault();
 
         try {
-            const res = await fetch("http://localhost:8000/login", {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const res = await fetch(`${apiBaseUrl}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
@@ -23,7 +24,7 @@ const LoginForm = () => {
 
             const data = await res.json();
 
-            if (data.success) {
+            if (res.ok && data.success) {
                 if (typeof window !== "undefined") {
                     localStorage.setItem("username", data.user.name);
                     localStorage.setItem("role", data.role);
@@ -36,16 +37,14 @@ const LoginForm = () => {
                 return;
             }
 
-            // If backend returned an internal/backend error, fall back to local credentials
-            if (data.message && data.message.toLowerCase().includes("backend error")) {
-                // fall through to fallback below
-            } else {
-                alert(data.message || "Invalid credentials");
-                return;
+            if (!res.ok || (data.message && data.message.toLowerCase().includes("backend error"))) {
+                throw new Error(data.message || "Backend login failed");
             }
+
+            alert(data.message || "Invalid credentials");
+            return;
         } catch (err) {
             console.warn("Backend unreachable, falling back to local credentials", err);
-            // fall through to fallback below
         }
 
         // Fallback: local hardcoded credentials (development only)
@@ -74,69 +73,167 @@ const LoginForm = () => {
     };
 
     return (
-        <div className="flex justify-center min-h-screen">
-            <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 mt-20 w-full max-w-md">
-                <h2 className="text-3xl font-bold mb-6 text-white">
-                    <span className="bg-linear-to-r text-transparent from-blue-500 to-purple-500 bg-clip-text">Pariksha</span>
-                </h2>
-                <form onSubmit={handleSubmit}>
-
-                    <div className="mb-6">
-                        <label htmlFor="Username" className="block text-gray-700 text-sm font-bold mb-2">
-                            <FontAwesomeIcon icon={faUser} className="mr-2 inline w-3.5" />
-                            Username
-                        </label>
-                        <div>
+        /* The main outer frame spans full dimensions overlaying your background */
+        <div style={styles.pageOverlayWrapper}>
+            
+            {/* Left side viewport column acting as the anchor box */}
+            <div style={styles.leftFormColumn}>
+                <div style={styles.formCard}>
+                    <h2 style={styles.brandTitle}>
+                        <span style={styles.gradientText}>Pariksha</span>
+                    </h2>
+                    
+                    <form onSubmit={handleSubmit}>
+                        {/* USERNAME FIELD */}
+                        <div style={styles.fieldGroup}>
+                            <label htmlFor="Username" style={styles.fieldLabel}>
+                                <FontAwesomeIcon icon={faUser} style={styles.fieldIcon} />
+                                Username
+                            </label>
                             <input
                                 id="Username"
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 autoComplete="off"
-                                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                style={styles.textInput}
                                 placeholder="Enter your username"
+                                required
                             />
                         </div>
-                    </div>
 
-                    <div className="mb-6">
-                        <label htmlFor="Password" className="block text-gray-700 text-sm font-bold mb-2">
-                            <FontAwesomeIcon icon={faLock} className="mr-2 inline w-3.5" />
-                            Password
-                        </label>
-                        <div>
+                        {/* PASSWORD FIELD */}
+                        <div style={styles.fieldGroup}>
+                            <label htmlFor="Password" style={styles.fieldLabel}>
+                                <FontAwesomeIcon icon={faLock} style={styles.fieldIcon} />
+                                Password
+                            </label>
                             <input
                                 id="Password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="off"
-                                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                style={styles.textInput}
                                 placeholder="Enter your password"
+                                required
                             />
                         </div>
-                    </div>
 
-                    <div className="flex item-center justify-center">
-                        <button
-                            type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
-                        >
-                            Login
-                        </button>
-                    </div>
+                        {/* SUBMIT */}
+                        <div style={styles.actionWrapper}>
+                            <button type="submit" style={styles.primarySubmitBtn}>
+                                Login
+                            </button>
+                        </div>
 
-                    <div className="text-center mt-4">
-                        <Link href="/contact-admin" className="text-gray-600 hover:underline">
-                            Forgot Password?
-                        </Link>
-                    </div>
-
-                </form>
+                        <div style={styles.supportLinkCenter}>
+                            <Link href="/contact-admin" style={styles.forgotPassLink}>
+                                Forgot Password?
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
 
+            {/* Right empty spacer area to allow background art to stay visible */}
+            <div style={styles.rightSpacerColumn} />
         </div>
     );
+};
+
+// CLEAN ALIGNED STYLING HOOKS
+const styles = {
+    pageOverlayWrapper: {
+        display: "flex",
+        width: "100%",
+        minHeight: "100vh",
+        fontFamily: "Inter, system-ui, sans-serif",
+    },
+    leftFormColumn: {
+        width: "100%",
+        maxWidth: "420px", /* Beautifully thin card profile width */
+        backgroundColor: "rgba(255, 255, 255, 0.96)", /* Subtle premium opaque white overlay */
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 40px",
+        boxShadow: "10px 0 30px rgba(0, 0, 0, 0.1)",
+        zIndex: 10,
+    },
+    rightSpacerColumn: {
+        flex: 1,
+        display: "block", /* Keeps the right side empty so background asset isn't hidden */
+    },
+    formCard: {
+        width: "100%",
+    },
+    brandTitle: {
+        fontSize: "32px",
+        fontWeight: 800,
+        marginBottom: "32px",
+        textAlign: "left",
+        letterSpacing: "-0.02em",
+    },
+    gradientText: {
+        background: "linear-gradient(to right, #3B82F6, #A855F7)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+    },
+    fieldGroup: {
+        marginBottom: "24px",
+    },
+    fieldLabel: {
+        display: "flex",
+        alignItems: "center",
+        color: "#4B5563",
+        fontSize: "14px",
+        fontWeight: 600,
+        marginBottom: "8px",
+    },
+    fieldIcon: {
+        marginRight: "8px",
+        color: "#4B5563",
+        width: "14px",
+        height: "14px",
+    },
+    textInput: {
+        width: "100%",
+        padding: "12px 16px",
+        border: "1px solid #D1D5DB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#1F2937",
+        outline: "none",
+        backgroundColor: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+    actionWrapper: {
+        marginTop: "32px",
+    },
+    primarySubmitBtn: {
+        width: "100%",
+        background: "linear-gradient(to right, #3B82F6, #A855F7)",
+        color: "#FFFFFF",
+        fontWeight: 700,
+        padding: "14px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: "pointer",
+        fontSize: "15px",
+        boxShadow: "0 4px 12px rgba(147, 51, 234, 0.2)",
+    },
+    supportLinkCenter: {
+        textAlign: "center",
+        marginTop: "20px",
+    },
+    forgotPassLink: {
+        color: "#6B7280",
+        fontSize: "13px",
+        textDecoration: "none",
+        fontWeight: 500,
+    },
 };
 
 export default LoginForm;

@@ -45,7 +45,6 @@ const LoginForm = () => {
             return;
         } catch (err) {
             console.warn("Backend unreachable, falling back to local credentials", err);
-            // fall through to fallback below
         }
 
         // Fallback: local hardcoded credentials (development only)
@@ -74,8 +73,9 @@ const LoginForm = () => {
     };
 
     return (
-        <div className="flex justify-center min-h-screen">
-            <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 mt-20 w-full max-w-md">
+        /* Cleaned container: width fills the parent absolute wrapper perfectly */
+        <div className="w-full">
+            <div className="bg-white shadow-md rounded px-8 pt-6 pb-8">
                 <h2 className="text-3xl font-bold mb-6 text-white">
                     <span className="bg-linear-to-r text-transparent from-blue-500 to-purple-500 bg-clip-text">Pariksha</span>
                 </h2>
@@ -120,7 +120,7 @@ const LoginForm = () => {
                     <div className="flex item-center justify-center">
                         <button
                             type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
+                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
                         >
                             Login
                         </button>
@@ -134,7 +134,6 @@ const LoginForm = () => {
 
                 </form>
             </div>
-
         </div>
     );
 };
