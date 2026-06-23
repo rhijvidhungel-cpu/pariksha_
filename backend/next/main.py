@@ -1,4 +1,5 @@
 import io
+import os
 import traceback
 import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -32,6 +33,7 @@ def safe_get_field(record, key, index=0):
 # Mount the router to the FastAPI application instance
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
+
 @app.get("/api/students")
 def get_students():
     try:
@@ -126,33 +128,31 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
             
             dept_id, batch_id = resolve_academic_keys(cursor, target_batch_enforced)
             
+            # OPTIMIZATION: Fetch existing usernames for this batch in ONE query to avoid inner-loop DB lag
+            cursor.execute("""
+                SELECT u.username FROM students s
+                JOIN users u ON s.user_id = u.user_id
+                WHERE s.batch_id = %s;
+            """, (batch_id,))
+            existing_usernames = {safe_get_field(r, 'username', 0) for r in cursor.fetchall()}
+            
             for index, row in df.iterrows():
                 roll_val = str(row[roll_col]).split('.')[0].strip() if '.' in str(row[roll_col]) else str(row[roll_col]).strip()
                 name_val = str(row[name_col]).strip()
                 
-                # Check for an optional batch column inside the file row record
                 file_batch_val = str(row[batch_col]).strip().upper() if batch_col in df.columns else target_batch_enforced
                 
                 if not roll_val or roll_val == "nan" or not name_val or name_val == "nan":
                     continue
                 
-                # REJECTION STEP: Drop row entries that do not map directly to the explicitly chosen dropdown target batch
                 if file_batch_val != target_batch_enforced:
                     skipped_mismatch += 1
                     continue
                 
                 composite_username = f"{roll_val}-{target_batch_enforced}"
                 
-                # Verify identity uniqueness isolated within this single targeted batch configuration layout
-                check_query = """
-                    SELECT 1 FROM students s
-                    JOIN batches b ON s.batch_id = b.batch_id
-                    JOIN users u ON s.user_id = u.user_id
-                    WHERE s.batch_id = %s AND (u.username = %s OR u.username = %s);
-                """
-                cursor.execute(check_query, (batch_id, roll_val, composite_username))
-                
-                if cursor.fetchone():
+                # In-memory instant validation check
+                if composite_username in existing_usernames or roll_val in existing_usernames:
                     skipped_duplicates += 1
                     continue 
                 
@@ -166,6 +166,8 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                     "INSERT INTO students (full_name, user_id, department_id, batch_id) VALUES (%s, %s, %s, %s);",
                     (name_val, user_id, dept_id, batch_id)
                 )
+                
+                existing_usernames.add(composite_username)
                 inserted += 1
                 
             conn.commit()
@@ -196,7 +198,6 @@ def add_manual_student(payload: dict):
         dept_id, batch_id = resolve_academic_keys(cursor, batch_str)
         composite_username = f"{roll}-{batch_str}"
         
-        # Verify identity uniqueness isolated within this batch layout block
         check_query = """
             SELECT 1 FROM students s
             WHERE s.batch_id = %s AND s.user_id IN (
@@ -231,12 +232,10 @@ def delete_student(roll: str, batch: str):
         clean_roll = roll.strip()
         clean_batch = batch.strip().upper()
         
-        # Look using standard unique composite structure
         composite_username = f"{clean_roll}-{clean_batch}"
         cursor.execute("SELECT user_id FROM users WHERE username = %s;", (composite_username,))
         user_record = cursor.fetchone()
         
-        # Fallback tracking for pre-existing plain structural records
         if not user_record:
             fallback_query = """
                 SELECT u.user_id FROM users u
@@ -256,18 +255,13 @@ def delete_student(roll: str, batch: str):
         
         raise HTTPException(status_code=404, detail="Target student record lookup failed.")
 
-# =========================================================================
-# NEW INJECTED ENDPOINT: WIPE ENTIRE BATCH TARGET POPULATION
-# =========================================================================
 @app.delete("/api/students/bulk-purge")
 def bulk_purge_batch(batch: str):
-    """Wipes out all students linked to an explicit batch at once safely."""
     clean_batch = batch.strip().upper()
     
     with get_raw_db() as conn:
         cursor = conn.cursor()
         
-        # Look up batch ID first
         cursor.execute("SELECT batch_id FROM batches WHERE batch_name = %s;", (clean_batch,))
         batch_record = cursor.fetchone()
         batch_id = safe_get_field(batch_record, 'batch_id', 0)
@@ -275,28 +269,20 @@ def bulk_purge_batch(batch: str):
         if not batch_id:
             raise HTTPException(status_code=404, detail=f"Batch '{clean_batch}' does not exist.")
             
-        # Select all targets to scrub related user profiles correctly 
         cursor.execute("SELECT user_id FROM students WHERE batch_id = %s;", (batch_id,))
         user_rows = cursor.fetchall()
         user_ids = [safe_get_field(r, 'user_id', 0) for r in user_rows if safe_get_field(r, 'user_id', 0)]
         
         if user_ids:
-            # Delete entries from dependent tables using the matching IDs
             cursor.execute("DELETE FROM students WHERE batch_id = %s;", (batch_id,))
-            
-            # Format argument format string manually for safe user id array cleaning
             format_strings = ','.join(['%s'] * len(user_ids))
             cursor.execute(f"DELETE FROM users WHERE user_id IN ({format_strings});", tuple(user_ids))
             
         conn.commit()
         return {"success": True, "message": f"Successfully purged all students from batch '{clean_batch}'."}
 
-# =========================================================================
-# NEW INJECTED ENDPOINT: INLINE DATA MODIFICATION CONTROLLER
-# =========================================================================
 @app.put("/api/students/update")
 def update_student_credentials(payload: dict):
-    """Updates student parameters inline, adjusting names and updating composite usernames."""
     student_id = payload.get("student_id")
     new_name = str(payload.get("new_name", "")).strip()
     new_roll = str(payload.get("new_roll", "")).strip()
@@ -308,7 +294,6 @@ def update_student_credentials(payload: dict):
     with get_raw_db() as conn:
         cursor = conn.cursor()
         
-        # Find the target student's user ID
         cursor.execute("SELECT user_id, batch_id FROM students WHERE student_id = %s;", (student_id,))
         student_record = cursor.fetchone()
         if not student_record:
@@ -319,7 +304,6 @@ def update_student_credentials(payload: dict):
         
         new_composite_username = f"{new_roll}-{batch_name}"
         
-        # Check if the new roll number conflicts with a different student in the SAME batch
         check_query = """
             SELECT student_id FROM students s
             JOIN users u ON s.user_id = u.user_id
@@ -329,7 +313,6 @@ def update_student_credentials(payload: dict):
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail=f"Roll number '{new_roll}' already exists in batch '{batch_name}'.")
             
-        # Update records
         cursor.execute("UPDATE students SET full_name = %s WHERE student_id = %s;", (new_name, student_id))
         cursor.execute("UPDATE users SET username = %s WHERE user_id = %s;", (new_composite_username, user_id))
         
