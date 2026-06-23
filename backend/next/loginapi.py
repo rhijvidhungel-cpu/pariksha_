@@ -1,52 +1,43 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
-from database import SessionLocal
+# 1. Removed SQLAlchemy imports and imported your working get_raw_db
+from database import get_raw_db 
 
-# Changed from app = FastAPI() to an APIRouter so main.py can import it
 router = APIRouter()
 
 class Login(BaseModel):
     username: str
     password: str
 
-# Changed from @app.post to @router.post
 @router.post("/login")
 def login(data: Login):
-    db = SessionLocal()
+    # 2. Replaced SessionLocal() with your raw database connection manager
     try:
-        query = text(
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT user_id, username, role
+                FROM users
+                WHERE username = %s AND password = %s;
             """
-            SELECT user_id, username, role
-            FROM users
-            WHERE username = :username AND password = :password
-            """
-        )
+            
+            cursor.execute(query, (data.username, data.password))
+            user = cursor.fetchone()
+            
+            if not user:
+                return {"success": False, "message": "Invalid login"}
 
-        user = db.execute(
-            query,
-            {
-                "username": data.username,
-                "password": data.password,
-            },
-        ).fetchone()
-        
-        if not user:
-            return {"success": False, "message": "Invalid login"}
+            # Accessing fields smoothly by index position
+            user_id = user[0]
+            username = user[1]
+            role = user[2]
 
-        # Supports both tuple matching and dict-like attribute access safely
-        user_id = user[0] if isinstance(user, tuple) else getattr(user, "user_id", None)
-        username = user[1] if isinstance(user, tuple) else getattr(user, "username", None)
-        role = user[2] if isinstance(user, tuple) else getattr(user, "role", None)
-
-        return {
-            "success": True,
-            "role": role,
-            "user": {"id": user_id, "name": username},
-        }
-        
+            return {
+                "success": True,
+                "role": role,
+                "user": {"id": user_id, "name": username},
+            }
+            
     except Exception as e:
-        return {"success": False, "message": f"Database error: {str(e)}"}
-        
-    finally:
-        db.close()
+        return {"success": False, "message": f"Database error pipeline halt: {str(e)}"}
