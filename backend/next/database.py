@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 
-# 1. Fallback local credentials (what you already had)
+# Fallback local credentials (what you use on your computer)
 LOCAL_DB_PARAMS = {
     "host": "localhost",
     "database": "pariksha",
@@ -14,16 +14,18 @@ LOCAL_DB_PARAMS = {
 
 @contextmanager
 def get_raw_db():
-    """Context manager that checks for a cloud database URL first, then falls back to local."""
-    # 2. Check if Render has provided a DATABASE_URL environment variable
+    """Context manager that connects via DATABASE_URL with SSL enforcement for cloud, or falls back to local."""
     db_url = os.environ.get("DATABASE_URL")
     
     try:
         if db_url:
-            # Connect using the cloud URL string on Render
+            # FIX: If it's a Neon connection string, ensure sslmode is explicitly passed to psycopg2
+            if "sslmode=" not in db_url:
+                # Add parameter safely depending on existing query strings
+                db_url += "&sslmode=require" if "?" in db_url else "?sslmode=require"
+            
             conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
         else:
-            # Connect using your local credentials on your machine
             conn = psycopg2.connect(**LOCAL_DB_PARAMS, cursor_factory=RealDictCursor)
             
         yield conn
