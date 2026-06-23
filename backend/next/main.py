@@ -4,6 +4,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import the teachers router from your routers folder
+from routers import teachers 
+
 # Import local db pool mapping initialization file
 from database import get_raw_db
 
@@ -25,6 +28,8 @@ def safe_get_field(record, key, index=0):
         return record.get(key)
     return record[index]
 
+# Mount the router to the FastAPI application instance
+app.include_router(teachers.router)
 @app.get("/api/students")
 def get_students():
     try:
