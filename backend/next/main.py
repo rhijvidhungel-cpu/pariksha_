@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import the teachers router from your routers folder
 from routers import teachers 
+import loginapi
 
 # Import local db pool mapping initialization file
 from database import get_raw_db
@@ -30,6 +31,7 @@ def safe_get_field(record, key, index=0):
 
 # Mount the router to the FastAPI application instance
 app.include_router(teachers.router)
+app.include_router(loginapi.router) 
 @app.get("/api/students")
 def get_students():
     try:
