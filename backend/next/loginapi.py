@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-# 1. Removed SQLAlchemy imports and imported your working get_raw_db
 from database import get_raw_db 
 
 router = APIRouter()
@@ -11,11 +10,11 @@ class Login(BaseModel):
 
 @router.post("/login")
 def login(data: Login):
-    # 2. Replaced SessionLocal() with your raw database connection manager
     try:
         with get_raw_db() as conn:
             cursor = conn.cursor()
             
+            # Query to check credentials
             query = """
                 SELECT user_id, username, role
                 FROM users
@@ -28,10 +27,10 @@ def login(data: Login):
             if not user:
                 return {"success": False, "message": "Invalid login"}
 
-            # Accessing fields smoothly by index position
-            user_id = user[0]
-            username = user[1]
-            role = user[2]
+            # FIX: Reading fields dynamically as a dictionary (RealDictCursor compatible)
+            user_id = user.get("user_id") if isinstance(user, dict) else user[0]
+            username = user.get("username") if isinstance(user, dict) else user[1]
+            role = user.get("role") if isinstance(user, dict) else user[2]
 
             return {
                 "success": True,
