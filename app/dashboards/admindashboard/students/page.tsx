@@ -118,6 +118,36 @@ export default function StudentsManagement() {
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+  const handlePurgeRecord = async (roll: string, batch: string) => {
+    if (!confirm(`Are you sure you want to permanently delete student roll number ${roll}?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch(`${apiBaseUrl}/api/students/manual?roll=${roll}&batch=${batch}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${res.status}`);
+      }
+
+      alert("Student record purged successfully!");
+      // If you have a fetchStudents() function, uncomment the line below:
+      // fetchStudents();
+    } catch (err: any) {
+      console.error("Purge error:", err);
+      alert(err.message || "Failed to delete student record.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
       setLoading(true);
       const res = await fetch(`${apiBaseUrl}/api/students/manual`, {
@@ -153,7 +183,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       setLoading(false);
     }
   };
-
   const handlePurgeEntireBatch = async () => {
     if (!confirm(`⚠️ CRITICAL WARNING!!! Are you absolutely sure you want to delete EVERY student inside batch [${currentBatchView}]? This cannot be undone.`)) return;
     
