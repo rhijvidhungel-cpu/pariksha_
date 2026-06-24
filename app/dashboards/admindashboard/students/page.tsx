@@ -143,9 +143,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       alert("Student data added successfully!");
       setFullName("");
       setRollNumber("");
-      
-      // Optional: If you have a function that refreshes the student list on your screen, call it here:
-      // fetchStudents(); 
 
     } catch (err: any) {
       // 4. Handle any network errors or database rejections
@@ -153,29 +150,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       alert(err.message || "Network exception: Is your Python FastAPI execution online?");
     } finally {
       // 5. Turn off the loading spinner no matter what happens
-      setLoading(false);
-    }
-  };
-
-  const handlePurgeRecord = async (rollId: string, batchId: string) => {
-    if (!confirm(`Are you sure you want to delete roll [${rollId}] from batch [${batchId}]?`)) return;
-    
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `${apiBaseUrl}/api/students/delete?roll=${encodeURIComponent(rollId)}&batch=${encodeURIComponent(batchId)}`, 
-        { method: "DELETE" }
-      );
-
-      if (res.ok) {
-        fetchDirectory();
-      } else {
-        const data = await res.json();
-        alert(`Deletion Failed: ${data.detail}`);
-      }
-    } catch (err) {
-      alert("Failed to reach server to complete record deletion.");
-    } finally {
       setLoading(false);
     }
   };
