@@ -48,13 +48,14 @@ export default function UploadRoutinePage() {
     setMessage(null);
 
     const formData = new FormData();
-    // CRITICAL BUG FIXES HERE:
-    formData.append("routine", file); // 1. Matches your backend variable name
-    formData.append("batch", currentBatchView.trim().toUpperCase());
+    
+    // MATCHES YOUR EXAM_ROUTINE.PY BACKEND DEFINITIONS EXACTLY:
+    formData.append("file", file); // 1. backend expects: file: UploadFile = File(...)
+    formData.append("batch", currentBatchView.trim().toUpperCase()); // 2. backend expects: batch: str = Form(...)
 
     try {
-      // 2. Matches your actual, original working backend endpoint
-      const response = await fetch("https://pariksha-9qjs.onrender.com/api/admin/upload-routine", {
+      // 3. TARGETS YOUR EXACT ROUTER PREFIX AND METHOD POST ROUTE
+      const response = await fetch("https://pariksha-9qjs.onrender.com/api/routines/bulk", {
         method: "POST",
         body: formData,
       });
@@ -62,7 +63,7 @@ export default function UploadRoutinePage() {
       const responseData = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Exam routine uploaded and parsed successfully!" });
+        setMessage({ type: "success", text: responseData.message || "Exam routine uploaded and parsed successfully!" });
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
