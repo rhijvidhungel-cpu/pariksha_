@@ -115,7 +115,10 @@ export default function StudentsManagement() {
     e.preventDefault();
     if (!fullName || !rollNumber || !currentBatchView) return;
 
-try {
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
       setLoading(true);
       const res = await fetch(`${apiBaseUrl}/api/students/manual`, {
         method: "POST",
@@ -153,7 +156,7 @@ try {
       setLoading(false);
     }
   };
-
+  
   const handlePurgeRecord = async (rollId: string, batchId: string) => {
     if (!confirm(`Are you sure you want to delete roll [${rollId}] from batch [${batchId}]?`)) return;
     
