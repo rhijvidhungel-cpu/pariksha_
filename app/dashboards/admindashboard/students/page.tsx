@@ -115,7 +115,7 @@ export default function StudentsManagement() {
     e.preventDefault();
     if (!fullName || !rollNumber || !currentBatchView) return;
 
-    try {
+try {
       setLoading(true);
       const res = await fetch(`${apiBaseUrl}/api/students/manual`, {
         method: "POST",
@@ -127,18 +127,29 @@ export default function StudentsManagement() {
         }),
       });
 
-      if (res.ok) {
-        setFullName("");
-        setRollNumber("");
-        fetchDirectory();
-        fetchBatches();
-      } else {
-        const data = await res.json();
-        alert(`Manual Add Error: ${data.detail}`);
+      // 1. Check if the server responded with an error (like 400, 404, or 500)
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${res.status}`);
       }
-    } catch (err) {
-      alert("Failed communicating manual entry parameters to the server.");
+
+      // 2. Parse the successful data response
+      const data = await res.json();
+      
+      // 3. Success! Alert the user and clear out the input fields
+      alert("Student data added successfully!");
+      setFullName("");
+      setRollNumber("");
+      
+      // Optional: If you have a function that refreshes the student list on your screen, call it here:
+      // fetchStudents(); 
+
+    } catch (err: any) {
+      // 4. Handle any network errors or database rejections
+      console.error("Submission error:", err);
+      alert(err.message || "Network exception: Is your Python FastAPI execution online?");
     } finally {
+      // 5. Turn off the loading spinner no matter what happens
       setLoading(false);
     }
   };
