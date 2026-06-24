@@ -10,7 +10,7 @@ interface Student {
 }
 
 export default function StudentsManagement() {
-  // Use live Render server as fallback for production, localhost for local dev
+  // Global API configuration pointing securely to your Render server
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://pariksha-9qjs.onrender.com";
 
   // State Management
@@ -138,13 +138,12 @@ export default function StudentsManagement() {
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !rollNumber || !currentBatchView) return;
     
     try {
       setLoading(true);
-      // Make sure this exact line uses ${apiBaseUrl} instead of localhost!
       const res = await fetch(`${apiBaseUrl}/api/students/manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,8 +159,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         throw new Error(errorData.detail || `Server error: ${res.status}`);
       }
 
-      const data = await res.json();
-      
       alert("Student data added successfully!");
       setFullName("");
       setRollNumber("");
@@ -169,7 +166,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     } catch (err: any) {
       console.error("Submission error:", err);
-      alert(err.message || "Network exception: Is your Python FastAPI execution online?");
+      alert(err.message || "Network error processing your request.");
     } finally {
       setLoading(false);
     }
@@ -372,7 +369,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700 font-medium">
                 {loading ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-gray-400">Syncing live directory tables from PostgreSQL...</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-gray-400">Syncing live directory tables...</td></tr>
                 ) : filteredStudents.length > 0 ? (
                   filteredStudents.map((student) => (
                     <tr key={student.sn} className="hover:bg-gray-50/40 transition-colors">
