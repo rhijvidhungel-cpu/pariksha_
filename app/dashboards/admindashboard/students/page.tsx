@@ -156,7 +156,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       setLoading(false);
     }
   };
-  
+
   const handlePurgeRecord = async (rollId: string, batchId: string) => {
     if (!confirm(`Are you sure you want to delete roll [${rollId}] from batch [${batchId}]?`)) return;
     
@@ -439,4 +439,4 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
     </div>
   );
-}
+}}
