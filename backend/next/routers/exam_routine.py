@@ -2,10 +2,10 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, status
 import pypdf
 import io
 
-# 1. FIX: Explicitly instantiate the APIRouter instance here
+# 1. Instantiate the APIRouter instance
 router = APIRouter()
 
-# 2. FIX: Shorten the sub-path here so it combines perfectly with your main.py prefixes
+# 2. Set the sub-path endpoint (combines with prefix="/api/admin" in main.py)
 @router.post("/upload-routine")
 async def upload_routine(routine: UploadFile = File(...)):
     # Validate that the incoming file is actually a PDF
@@ -20,8 +20,9 @@ async def upload_routine(routine: UploadFile = File(...)):
         pdf_bytes = await routine.read()
         
         # Stream bytes into the PyPDF memory buffer
+        # strict=False stops the parser from crashing on minor formatting anomalies
         pdf_file = io.BytesIO(pdf_bytes)
-        reader = pypdf.PdfReader(pdf_file)
+        reader = pypdf.PdfReader(pdf_file, strict=False)
         
         # Extract text from each page sequentially
         extracted_text = ""
@@ -30,7 +31,7 @@ async def upload_routine(routine: UploadFile = File(...)):
             if text:
                 extracted_text += text + "\n"
                 
-        # Log to Render's live console logs
+        # Log to Render's live console logs so you can inspect strings
         print("--- Extracted Routine Text ---")
         print(extracted_text)
         print("------------------------------")
