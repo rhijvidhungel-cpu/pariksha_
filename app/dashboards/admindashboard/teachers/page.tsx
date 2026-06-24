@@ -12,7 +12,7 @@ interface Teacher {
 
 export default function TeachersManagement() {
   const router = useRouter();
-  const API_BASE_URL = "http://127.0.0.1:8000/api/dashboards/admindashboard/teacher";
+  const API_BASE_URL = "https://pariksha-9qjs.onrender.com/api/dashboards/admindashboard/teacher";
 
   // View States
   const [teachers, setTeachers] = useState<Teacher[]>([]);
