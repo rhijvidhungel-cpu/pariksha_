@@ -5,31 +5,32 @@ import { useRouter, usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname(); // Reads the active URL route instantly from NextJS engine
+  const pathname = usePathname(); 
 
   const [adminName, setAdminName] = useState<string>("Master Admin");
   const [adminEmail, setAdminEmail] = useState<string>("root@ku.edu.np");
+  const [isVerified, setIsVerified] = useState<boolean>(false);
 
   useEffect(() => {
     const name = localStorage.getItem("username");
     const role = localStorage.getItem("role");
 
-    // Unified security routing checkpoint
+    // Strict unified checkpoint tracking
     if (!name || role !== "admin") {
-      router.push("/");
+      router.replace("/");
       return;
     }
 
     setAdminName(name);
+    setIsVerified(true);
+    
     const email = localStorage.getItem("email");
     if (email) setAdminEmail(email);
-  }, [router]);
+  }, [pathname, router]); // Re-evaluate cleanly on route modifications
 
   // Evaluates which path tab highlights based on current URL location
   const getNavClass = (targetPath: string) => {
     const baseClass = "flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all text-left w-full border-none bg-transparent cursor-pointer ";
-    
-    // Checks if exact match, or if it belongs to a nested route system
     const isActive = pathname === targetPath;
     
     if (isActive) {
@@ -37,6 +38,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     return baseClass + "font-medium text-[#C7D2FE] hover:bg-white/5";
   };
+
+  // Prevent UI flashing or breakdown during mid-transit verification
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen bg-[#2E1A47] flex items-center justify-center text-white font-medium">
+        Verifying Security Credentials...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -61,13 +71,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={() => router.push("/dashboards/admindashboard/teachers")} className={getNavClass("/dashboards/admindashboard/teachers")}>
               <span className="text-base">👥</span> <span>Teachers Management</span>
             </button>
-            <button onClick={() => router.push("/admin/classrooms")} className={getNavClass("/admin/classrooms")}>
+            <button onClick={() => router.push("/dashboards/admindashboard/classrooms")} className={getNavClass("/dashboards/admindashboard/classrooms")}>
               <span className="text-base">🏛️</span> <span>Classroom Management</span>
             </button>
-            <button onClick={() => router.push("/admin/routine")} className={getNavClass("/admin/routine")}>
+            <button onClick={() => router.push("/dashboards/admindashboard/exam_routine")} className={getNavClass("/dashboards/admindashboard/exam_routine")}>
               <span className="text-base">📅</span> <span>Upload Exam Routine</span>
             </button>
-            <button onClick={() => router.push("/admin/seat-allocation")} className={getNavClass("/admin/seat-allocation")}>
+            <button onClick={() => router.push("/dashboards/admindashboard/seat-allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
               <span className="text-base">🔀</span> <span>Seat Allocation Engine</span>
             </button>
           </nav>
