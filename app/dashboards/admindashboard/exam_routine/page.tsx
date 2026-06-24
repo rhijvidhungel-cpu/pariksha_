@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 
 export default function UploadRoutinePage() {
   const router = useRouter();
+  const apiBaseUrl = "https://pariksha-9qjs.onrender.com";
+  
   const [file, setFile] = useState<File | null>(null);
   const [batches, setBatches] = useState<string[]>(["CE-2024", "CS-2020", "ME-2023"]);
   const [currentBatchView, setCurrentBatchView] = useState("CE-2024");
-  const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Guard
@@ -27,52 +28,46 @@ export default function UploadRoutinePage() {
       const selectedFile = e.target.files[0];
       
       if (selectedFile.type !== "application/pdf") {
-        setMessage({ type: "error", text: "Invalid format. Please select an official PDF file." });
+        alert("Invalid format. Please select an official PDF file.");
         setFile(null);
         return;
       }
       
       setFile(selectedFile);
-      setMessage(null);
     }
   };
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleUploadEngine = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setMessage({ type: "error", text: "Please select a file first." });
-      return;
-    }
-
-    setIsUploading(true);
-    setMessage(null);
+    if (!file) return;
 
     const formData = new FormData();
-    
-    // MATCHES YOUR EXAM_ROUTINE.PY BACKEND DEFINITIONS EXACTLY:
-    formData.append("file", file); // 1. backend expects: file: UploadFile = File(...)
-    formData.append("batch", currentBatchView.trim().toUpperCase()); // 2. backend expects: batch: str = Form(...)
+    // Matches your exact python parameters: file and batch
+    formData.append("file", file);
+    formData.append("batch", currentBatchView.trim().toUpperCase());
 
     try {
-      // 3. TARGETS YOUR EXACT ROUTER PREFIX AND METHOD POST ROUTE
-      const response = await fetch("https://pariksha-9qjs.onrender.com/api/routines/bulk", {
+      setLoading(true);
+      
+      // Hits your exact backend router address definition string
+      const res = await fetch(`${apiBaseUrl}/api/routines/bulk`, {
         method: "POST",
         body: formData,
       });
 
-      const responseData = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        setMessage({ type: "success", text: responseData.message || "Exam routine uploaded and parsed successfully!" });
+      const data = await res.json();
+      
+      if (res.ok) {
+        alert(data.message || "Exam PDF routine parsed successfully!");
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
-        throw new Error(responseData.detail || responseData.message || "Failed to upload file.");
+        alert(`UPLOADER REJECTION: ${data.detail || "Failed to process routine file."}`);
       }
-    } catch (error: any) {
-      setMessage({ type: "error", text: error.message || "An error occurred during upload." });
+    } catch (err) {
+      alert("Network exception: Is your Python FastAPI execution online?");
     } finally {
-      setIsUploading(false);
+      setLoading(false);
     }
   };
 
@@ -90,9 +85,9 @@ export default function UploadRoutinePage() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-        <form onSubmit={handleUpload} className="flex flex-col gap-5">
+        <form onSubmit={handleUploadEngine} className="flex flex-col gap-5">
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Target Batch Scope Link</label>
+            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Target Batch Scope Filter</label>
             <div className="relative w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus-within:border-indigo-500">
               <select 
                 value={currentBatchView} 
@@ -127,26 +122,16 @@ export default function UploadRoutinePage() {
             {file && <p className="text-xs text-indigo-500 font-mono font-bold mt-1.5">({(file.size / 1024 / 1024).toFixed(2)} MB)</p>}
           </div>
 
-          {message && (
-            <div className={`border rounded-xl px-4 py-3 text-xs font-bold ${
-              message.type === "success" 
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
-                : "bg-rose-50 border-rose-200 text-rose-800"
-            }`}>
-              {message.text}
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={!file || isUploading}
+            disabled={!file || loading}
             className={`w-full text-xs font-bold py-4 px-4 rounded-xl shadow-md transition-all h-12 ${
-              !file || isUploading 
+              !file || loading 
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none" 
                 : "bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99]"
             }`}
           >
-            {isUploading ? "Uploading Routine..." : "Upload and Process PDF"}
+            {loading ? "Uploading Routine..." : "Upload and Process PDF"}
           </button>
         </form>
       </div>
