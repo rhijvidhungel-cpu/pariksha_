@@ -138,12 +138,13 @@ export default function StudentsManagement() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !rollNumber || !currentBatchView) return;
     
     try {
       setLoading(true);
+      // Make sure this exact line uses ${apiBaseUrl} instead of localhost!
       const res = await fetch(`${apiBaseUrl}/api/students/manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
