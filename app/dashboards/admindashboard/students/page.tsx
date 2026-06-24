@@ -10,7 +10,8 @@ interface Student {
 }
 
 export default function StudentsManagement() {
-  const apiBaseUrl = "http://localhost:8000";
+  // Use live Render server as fallback for production, localhost for local dev
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://pariksha-9qjs.onrender.com";
 
   // State Management
   const [students, setStudents] = useState<Student[]>([]);
@@ -111,13 +112,6 @@ export default function StudentsManagement() {
     }
   };
 
-  const handleManualInsertSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !rollNumber || !currentBatchView) return;
-
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
   const handlePurgeRecord = async (roll: string, batch: string) => {
     if (!confirm(`Are you sure you want to permanently delete student roll number ${roll}?`)) {
       return;
@@ -135,8 +129,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
 
       alert("Student record purged successfully!");
-      // If you have a fetchStudents() function, uncomment the line below:
-      // fetchStudents();
+      fetchDirectory();
     } catch (err: any) {
       console.error("Purge error:", err);
       alert(err.message || "Failed to delete student record.");
@@ -147,6 +140,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName || !rollNumber || !currentBatchView) return;
     
     try {
       setLoading(true);
@@ -160,29 +154,26 @@ const handleSubmit = async (e: React.FormEvent) => {
         }),
       });
 
-      // 1. Check if the server responded with an error (like 400, 404, or 500)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.detail || `Server error: ${res.status}`);
       }
 
-      // 2. Parse the successful data response
       const data = await res.json();
       
-      // 3. Success! Alert the user and clear out the input fields
       alert("Student data added successfully!");
       setFullName("");
       setRollNumber("");
+      fetchDirectory();
 
     } catch (err: any) {
-      // 4. Handle any network errors or database rejections
       console.error("Submission error:", err);
       alert(err.message || "Network exception: Is your Python FastAPI execution online?");
     } finally {
-      // 5. Turn off the loading spinner no matter what happens
       setLoading(false);
     }
   };
+
   const handlePurgeEntireBatch = async () => {
     if (!confirm(`⚠️ CRITICAL WARNING!!! Are you absolutely sure you want to delete EVERY student inside batch [${currentBatchView}]? This cannot be undone.`)) return;
     
@@ -321,38 +312,38 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-       {/* MANUAL MANIPULATION PANEL */}
-<div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
-  <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView}</h3>
-  <form onSubmit={handleManualInsertSubmit} className="flex flex-col gap-5">
-    <div>
-      <label className="block text-xs font-bold text-gray-500 mb-2">Full Student Name</label>
-      <input 
-        type="text" 
-        value={fullName} 
-        onChange={(e) => setFullName(e.target.value)} 
-        placeholder="e.g. Ramesh Poudel" 
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 bg-white text-gray-900 placeholder-gray-400 font-medium" 
-        required 
-      />
-    </div>
-    <div>
-      <label className="block text-xs font-bold text-gray-500 mb-2">Roll ID Number</label>
-      <input 
-        type="text" 
-        value={rollNumber} 
-        onChange={(e) => setRollNumber(e.target.value)} 
-        placeholder="e.g. 45" 
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 bg-white text-gray-900 placeholder-gray-400 font-medium" 
-        required 
-      />
-    </div>
-    
-    <button type="submit" className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
-      + Insert Into {currentBatchView} Directory
-    </button>
-  </form>
-</div>
+        {/* MANUAL MANIPULATION PANEL */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
+          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView}</h3>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-2">Full Student Name</label>
+              <input 
+                type="text" 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)} 
+                placeholder="e.g. Ramesh Poudel" 
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 bg-white text-gray-900 placeholder-gray-400 font-medium" 
+                required 
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-2">Roll ID Number</label>
+              <input 
+                type="text" 
+                value={rollNumber} 
+                onChange={(e) => setRollNumber(e.target.value)} 
+                placeholder="e.g. 45" 
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 bg-white text-gray-900 placeholder-gray-400 font-medium" 
+                required 
+              />
+            </div>
+            
+            <button type="submit" className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
+              + Insert Into {currentBatchView} Directory
+            </button>
+          </form>
+        </div>
 
         {/* LIVE DATA DIRECTORY CONTAINER */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-8 shadow-sm">
@@ -442,4 +433,4 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
     </div>
   );
-}}
+}
