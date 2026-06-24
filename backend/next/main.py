@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Import the teachers router from your routers folder
 from routers import teachers 
 import loginapi
+from routers import exam_routine
 
 # Import local db pool mapping initialization file
 from database import get_raw_db

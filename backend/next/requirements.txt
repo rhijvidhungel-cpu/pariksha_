@@ -6,3 +6,4 @@ pandas
 openpyxl
 email-validator
 python-multipart
+pypdf
