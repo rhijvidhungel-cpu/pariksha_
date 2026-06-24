@@ -10,7 +10,7 @@ interface Student {
 }
 
 export default function StudentsManagement() {
-  const apiBaseUrl = "http://localhost:8000";
+  const apiBaseUrl = "https://pariksha-9qjs.onrender.com";
 
   // State Management
   const [students, setStudents] = useState<Student[]>([]);
