@@ -5,10 +5,10 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import the teachers router from your routers folder
+# Import your routers correctly from the routers folder
 from routers import teachers 
+from routers.exam_routine import router as exam_routine_router # ✅ FIXED: Pointing inside the routers folder
 import loginapi
-from exam_routine import router as exam_routine_router
 
 # Import local db pool mapping initialization file
 from database import get_raw_db
@@ -31,10 +31,11 @@ def safe_get_field(record, key, index=0):
         return record.get(key)
     return record[index]
 
-# Mount the router to the FastAPI application instance
+# Mount the routers to the FastAPI application instance
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
-app.include_router(exam_routine_router)
+app.include_router(exam_routine_router) # ✅ This will now mount perfectly!
+
 @app.get("/api/students")
 def get_students():
     try:
@@ -129,7 +130,6 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
             
             dept_id, batch_id = resolve_academic_keys(cursor, target_batch_enforced)
             
-            # OPTIMIZATION: Fetch existing usernames for this batch in ONE query to avoid inner-loop DB lag
             cursor.execute("""
                 SELECT u.username FROM students s
                 JOIN users u ON s.user_id = u.user_id
@@ -140,7 +140,6 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
             for index, row in df.iterrows():
                 roll_val = str(row[roll_col]).split('.')[0].strip() if '.' in str(row[roll_col]) else str(row[roll_col]).strip()
                 name_val = str(row[name_col]).strip()
-                
                 file_batch_val = str(row[batch_col]).strip().upper() if batch_col in df.columns else target_batch_enforced
                 
                 if not roll_val or roll_val == "nan" or not name_val or name_val == "nan":
@@ -152,7 +151,6 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                 
                 composite_username = f"{roll_val}-{target_batch_enforced}"
                 
-                # In-memory instant validation check
                 if composite_username in existing_usernames or roll_val in existing_usernames:
                     skipped_duplicates += 1
                     continue 
@@ -225,7 +223,7 @@ def add_manual_student(payload: dict):
         conn.commit()
         return {"success": True}
 
-@app.delete("/api/students/delete")
+@app.delete("/api/students/manual")
 def delete_student(roll: str, batch: str):
     with get_raw_db() as conn:
         cursor = conn.cursor()
