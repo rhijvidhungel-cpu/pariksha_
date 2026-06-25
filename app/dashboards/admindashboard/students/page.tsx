@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Student {
-  sn: number;
+  id: string; // ✅ Changed key parameter name to prevent any fallback variable conflicts
   name: string;
   roll: string;
   batch: string;
@@ -14,17 +14,17 @@ export default function StudentsManagement() {
 
   // State Management
   const [students, setStudents] = useState<Student[]>([]);
-  const [batches, setBatches] = useState<string[]>([]); // ✅ Cleaned hardcoded string constants
+  const [batches, setBatches] = useState<string[]>([]); 
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   
-  // Active viewing/inserting batch filter (Dynamically set on load)
+  // Active viewing/inserting batch filter
   const [currentBatchView, setCurrentBatchView] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   // Inline Editing States
-  const [editingSn, setEditingSn] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null); // ✅ Tracks string references
   const [editName, setEditName] = useState("");
   const [editRoll, setEditRoll] = useState("");
 
@@ -41,11 +41,13 @@ export default function StudentsManagement() {
       if (res.ok) {
         const data = await res.json();
         
-        const normalizedData = data.map((item: any) => {
+        const normalizedData = data.map((item: any, idx: number) => {
           const rawRoll = safeGetField(item, 'roll', 2) || "";
+          const dbSn = safeGetField(item, 'sn', 0);
           return {
-            sn: safeGetField(item, 'sn', 0),
-            name: safeGetField(item, 'name', 1),
+            // ✅ Fix: Generate a guaranteed unique client-side key using index combined with database fallback
+            id: dbSn ? String(dbSn) : `student-${idx}`,
+            name: safeGetField(item, 'name', 1) || "Unknown",
             roll: rawRoll.includes('-') ? rawRoll.split('-')[0] : rawRoll,
             batch: safeGetField(item, 'batch', 3) || "N/A"
           };
@@ -67,7 +69,6 @@ export default function StudentsManagement() {
         const data = await res.json();
         if (data && data.length > 0) {
           setBatches(data);
-          // ✅ Instantly initialize drop-down perspective safely to index zero match
           setCurrentBatchView(data[0]);
         }
       }
@@ -198,12 +199,12 @@ export default function StudentsManagement() {
   };
 
   const startEditing = (student: Student) => {
-    setEditingSn(student.sn);
+    setEditingId(student.id);
     setEditName(student.name);
     setEditRoll(student.roll);
   };
 
-  const handleSaveEdit = async (studentSn: number, currentBatch: string) => {
+  const handleSaveEdit = async (studentId: string, currentBatch: string) => {
     if (!editName.trim() || !editRoll.trim()) return;
 
     try {
@@ -212,7 +213,7 @@ export default function StudentsManagement() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          student_id: studentSn,
+          student_id: parseInt(studentId, 10) || 0,
           new_name: editName.trim(),
           new_roll: editRoll.trim(),
           batch: currentBatch
@@ -220,7 +221,7 @@ export default function StudentsManagement() {
       });
 
       if (res.ok) {
-        setEditingSn(null);
+        setEditingId(null);
         fetchDirectory();
       } else {
         const data = await res.json();
@@ -375,14 +376,13 @@ export default function StudentsManagement() {
                 {loading ? (
                   <tr><td colSpan={5} className="p-8 text-center text-gray-400">Syncing live directory tables...</td></tr>
                 ) : filteredStudents.length > 0 ? (
-                  // ✅ FIXED: Added 'index' loop parameters to generate numerical sequence dynamically
                   filteredStudents.map((student, index) => (
-                    <tr key={student.sn} className="hover:bg-gray-50/40 transition-colors">
-                      {/* ✅ FIXED: Uses index + 1 for perfect layout ordering (1, 2, 3...) */}
+                    <tr key={student.id} className="hover:bg-gray-50/40 transition-colors">
+                      {/* ✅ FORCE EXACT POSITIONAL INDEX: This guarantees rendering 1, 2, 3... */}
                       <td className="p-4 text-center text-gray-400 font-normal">{index + 1}</td>
                       
                       <td className="p-4 font-bold text-gray-900">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <input 
                             type="text" 
                             value={editName} 
@@ -395,7 +395,7 @@ export default function StudentsManagement() {
                       </td>
                       
                       <td className="p-4 text-gray-600 font-mono">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <input 
                             type="text" 
                             value={editRoll} 
@@ -412,10 +412,10 @@ export default function StudentsManagement() {
                       </td>
                       
                       <td className="p-4 text-center flex items-center justify-center gap-3">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <>
-                            <button onClick={() => handleSaveEdit(student.sn, student.batch)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline">Save</button>
-                            <button onClick={() => setEditingSn(null)} className="text-gray-400 hover:text-gray-600 text-xs font-bold hover:underline">Cancel</button>
+                            <button onClick={() => handleSaveEdit(student.id, student.batch)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline">Save</button>
+                            <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600 text-xs font-bold hover:underline">Cancel</button>
                           </>
                         ) : (
                           <>
