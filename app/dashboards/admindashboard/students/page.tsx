@@ -62,21 +62,20 @@ export default function StudentsManagement() {
     }
   };
 
-  const fetchBatches = async () => {
+const fetchBatches = async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/api/batches`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
           setBatches(data);
-          setCurrentBatchView(data[0]);
+          setCurrentBatchView((prev) => (prev ? prev : data[0]));
         }
       }
     } catch (err) {
       console.error("Failed to sync batches from server:", err);
     }
   };
-
   useEffect(() => {
     fetchDirectory();
     fetchBatches();
