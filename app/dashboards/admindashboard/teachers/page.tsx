@@ -12,7 +12,9 @@ interface Teacher {
 
 export default function TeachersManagement() {
   const router = useRouter();
-  const API_BASE_URL = "https://pariksha-9qjs.onrender.com/api/dashboards/admindashboard/teachers";
+  
+  // ✅ FIXED: Cleaned and corrected base path to accurately align with the FastAPI routing configuration
+  const API_BASE_URL = "https://pariksha-9qjs.onrender.com/api/teachers";
 
   // View States
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -46,6 +48,8 @@ export default function TeachersManagement() {
       if (res.ok) {
         const data = await res.json();
         setTeachers(data);
+      } else {
+        console.error(`Fetch fallback returned status code: ${res.status}`);
       }
     } catch (err) {
       console.error("Failed to load records:", err);
@@ -70,7 +74,7 @@ export default function TeachersManagement() {
         setEmailAddress("");
         fetchTeachers(); 
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({ detail: "Failed insertion execution." }));
         setStatusMsg({ type: "error", text: errData.detail || "Failed insertion execution." });
       }
     } catch (err) {
@@ -103,7 +107,7 @@ export default function TeachersManagement() {
         setStatusMsg({ type: "success", text: "Faculty profile details updated successfully." });
         fetchTeachers();
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({ detail: "Failed to update profile." }));
         alert(errData.detail || "Failed to update profile.");
       }
     } catch (err) {
@@ -165,15 +169,15 @@ export default function TeachersManagement() {
           <form onSubmit={handleManualInsertSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Full Teacher Name</label>
-              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900" required />
+              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white" required />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Email Address Pointer</label>
-              <input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900" required />
+              <input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white" required />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Assigned Department</label>
-              <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 cursor-pointer">
+              <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white cursor-pointer">
                 <option value="Computer Science">Computer Science</option>
                 <option value="Civil Engineering">Civil Engineering</option>
                 <option value="Electrical Engineering">Electrical Engineering</option>
@@ -181,7 +185,7 @@ export default function TeachersManagement() {
                 <option value="Natural Sciences">Natural Sciences</option>
               </select>
             </div>
-            <button type="submit" className="w-full mt-2 bg-[#4F46E5] text-white text-xs font-bold py-3.5 rounded-xl cursor-pointer">+ Insert Into Directory Registry</button>
+            <button type="submit" className="w-full mt-2 bg-[#4F46E5] text-white text-xs font-bold py-3.5 rounded-xl cursor-pointer hover:bg-[#4338CA] transition-colors">+ Insert Into Directory Registry</button>
           </form>
         </div>
 
@@ -194,27 +198,28 @@ export default function TeachersManagement() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse m-0">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-400 text-[11px] font-extrabold uppercase bg-gray-50/30">
-                  <th className="py-3 px-5 text-center">S.N.</th>
+                <tr className="border-b border-gray-200 bg-gray-50/30 text-gray-500 text-[11px] font-extrabold uppercase tracking-wider">
+                  <th className="py-3 px-5 text-center w-16">S.N.</th>
                   <th className="py-3 px-4">Faculty Name Parameters</th>
                   <th className="py-3 px-4">Email System Routing</th>
                   <th className="py-3 px-4">Dept Link</th>
                   <th className="py-3 px-4 text-center w-[140px]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                 {filteredTeachers.length > 0 ? (
                   filteredTeachers.map((teacher, index) => (
-                    <tr key={teacher.id || index} className="hover:bg-gray-50/60">
+                    <tr key={teacher.id || index} className="hover:bg-gray-50/60 transition-colors">
                       <td className="py-3 px-5 font-mono text-xs text-gray-400 text-center">{index + 1}</td>
                       <td className="py-3 px-4 font-bold text-gray-900">{teacher.name}</td>
                       <td className="py-3 px-4 font-mono text-xs text-gray-600">{teacher.email}</td>
                       <td className="py-3 px-4">
-                        <span className="text-[10px] font-extrabold px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 uppercase">{teacher.department}</span>
+                        <span className="text-[10px] font-extrabold px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 uppercase tracking-wider">{teacher.department}</span>
                       </td>
-                      <td className="py-3 px-4 text-center flex justify-center gap-3">
-                        <button onClick={() => startEdit(teacher)} className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-xs font-extrabold cursor-pointer uppercase">Edit</button>
-                        <button onClick={() => handleRemoveTeacher(teacher.id)} className="bg-transparent border-none text-red-500 hover:text-red-700 text-xs font-extrabold cursor-pointer uppercase">Remove</button>
+                      <td className="py-3 px-4 text-center flex justify-center items-center gap-3">
+                        <button onClick={() => startEdit(teacher)} className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-xs font-extrabold cursor-pointer uppercase transition-colors">Edit</button>
+                        <span className="text-gray-200">|</span>
+                        <button onClick={() => handleRemoveTeacher(teacher.id)} className="bg-transparent border-none text-red-500 hover:text-red-700 text-xs font-extrabold cursor-pointer uppercase transition-colors">Remove</button>
                       </td>
                     </tr>
                   ))
@@ -235,15 +240,15 @@ export default function TeachersManagement() {
             <form onSubmit={handleUpdateSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Full Teacher Name</label>
-                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900" required />
+                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white" required />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Email Address (Username)</label>
-                <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900" required />
+                <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white" required />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Assigned Department</label>
-                <select value={editDept} onChange={(e) => setEditDept(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 cursor-pointer">
+                <select value={editDept} onChange={(e) => setEditDept(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white cursor-pointer">
                   <option value="Computer Science">Computer Science</option>
                   <option value="Civil Engineering">Civil Engineering</option>
                   <option value="Electrical Engineering">Electrical Engineering</option>
@@ -252,8 +257,8 @@ export default function TeachersManagement() {
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-2">
-                <button type="button" onClick={() => setEditingTeacher(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl border-none cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer">Save Changes</button>
+                <button type="button" onClick={() => setEditingTeacher(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl border-none cursor-pointer transition-colors">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl border-none cursor-pointer transition-colors">Save Changes</button>
               </div>
             </form>
           </div>
