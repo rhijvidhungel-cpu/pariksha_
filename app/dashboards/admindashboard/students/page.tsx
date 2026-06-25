@@ -14,12 +14,12 @@ export default function StudentsManagement() {
 
   // State Management
   const [students, setStudents] = useState<Student[]>([]);
-  const [batches, setBatches] = useState<string[]>(["CE-2024", "CS-2020", "ME-2023"]);
+  const [batches, setBatches] = useState<string[]>([]); // ✅ Cleaned hardcoded string constants
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   
-  // Active viewing/inserting batch filter (Defaults to CE-2024)
-  const [currentBatchView, setCurrentBatchView] = useState("CE-2024");
+  // Active viewing/inserting batch filter (Dynamically set on load)
+  const [currentBatchView, setCurrentBatchView] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -67,6 +67,8 @@ export default function StudentsManagement() {
         const data = await res.json();
         if (data && data.length > 0) {
           setBatches(data);
+          // ✅ Instantly initialize drop-down perspective safely to index zero match
+          setCurrentBatchView(data[0]);
         }
       }
     } catch (err) {
@@ -81,7 +83,7 @@ export default function StudentsManagement() {
 
   const handleExcelUploadEngine = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !currentBatchView) return;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -172,6 +174,7 @@ export default function StudentsManagement() {
   };
 
   const handlePurgeEntireBatch = async () => {
+    if (!currentBatchView) return;
     if (!confirm(`⚠️ CRITICAL WARNING!!! Are you absolutely sure you want to delete EVERY student inside batch [${currentBatchView}]? This cannot be undone.`)) return;
     
     try {
@@ -280,25 +283,27 @@ export default function StudentsManagement() {
               </select>
             </div>
           </div>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">Currently targeting batch pool <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView}</span>.</p>
+          <p className="text-xs text-gray-400 font-medium mt-0.5">Currently targeting batch pool <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView || "None"}</span>.</p>
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
           <button 
             onClick={handlePurgeEntireBatch}
-            className="bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
+            disabled={!currentBatchView}
+            className="bg-[#E11D48] hover:bg-[#BE123C] disabled:bg-gray-300 text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
           >
-            💥 Wipe Entire {currentBatchView} List
+            💥 Wipe Entire {currentBatchView || "Batch"} List
           </button>
 
           <label 
             htmlFor="excel-upload-trigger" 
-            className="bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11"
+            className={`bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11 ${!currentBatchView ? "pointer-events-none opacity-50" : ""}`}
           >
-            <span>📊 Bulk Parse Students into {currentBatchView}</span>
+            <span>📊 Bulk Parse Students into {currentBatchView || "Batch"}</span>
             <input 
               id="excel-upload-trigger" 
               type="file" 
+              disabled={!currentBatchView}
               accept=".xlsx, .csv" 
               onChange={handleExcelUploadEngine} 
               className="hidden" 
@@ -311,7 +316,7 @@ export default function StudentsManagement() {
         
         {/* MANUAL MANIPULATION PANEL */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
-          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView}</h3>
+          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView || "Directory"}</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Full Student Name</label>
@@ -336,8 +341,8 @@ export default function StudentsManagement() {
               />
             </div>
             
-            <button type="submit" className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
-              + Insert Into {currentBatchView} Directory
+            <button type="submit" disabled={!currentBatchView} className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-gray-300 text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
+              + Insert Into {currentBatchView || "Batch"} Directory
             </button>
           </form>
         </div>
@@ -370,9 +375,11 @@ export default function StudentsManagement() {
                 {loading ? (
                   <tr><td colSpan={5} className="p-8 text-center text-gray-400">Syncing live directory tables...</td></tr>
                 ) : filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
+                  // ✅ FIXED: Added 'index' loop parameters to generate numerical sequence dynamically
+                  filteredStudents.map((student, index) => (
                     <tr key={student.sn} className="hover:bg-gray-50/40 transition-colors">
-                      <td className="p-4 text-center text-gray-400 font-normal">{student.sn}</td>
+                      {/* ✅ FIXED: Uses index + 1 for perfect layout ordering (1, 2, 3...) */}
+                      <td className="p-4 text-center text-gray-400 font-normal">{index + 1}</td>
                       
                       <td className="p-4 font-bold text-gray-900">
                         {editingSn === student.sn ? (
