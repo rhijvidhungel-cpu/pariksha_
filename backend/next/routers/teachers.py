@@ -6,7 +6,7 @@ from typing import List
 from database import get_raw_db
 
 router = APIRouter(
-    prefix="/api/dashboards/admindashboard/teacher",
+    prefix="/api/dashboards/admindashboard/teachers",
     tags=["Teachers Management Module"]
 )
 
