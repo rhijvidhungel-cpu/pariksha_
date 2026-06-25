@@ -260,8 +260,12 @@ const fetchBatches = async () => {
     if (matchesExplicitBatchSearch) return true;
 
     return s.batch?.toLowerCase() === currentBatchView.toLowerCase() && matchesSearchTerm;
+  }).sort((a, b) => {
+    // ✅ Automatically sort students numerically by their Roll ID Number
+    const rollA = parseInt(a.roll, 10) || 0;
+    const rollB = parseInt(b.roll, 10) || 0;
+    return rollA - rollB;
   });
-
   return (
     <div className="p-8 flex flex-col gap-6 w-full max-w-[1400px] mx-auto">
       
