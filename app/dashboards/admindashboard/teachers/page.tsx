@@ -14,7 +14,8 @@ export default function TeachersManagement() {
   const router = useRouter();
   
   // ✅ FIXED: Cleaned and corrected base path to accurately align with the FastAPI routing configuration
-  const API_BASE_URL = "https://pariksha-9qjs.onrender.com/api/teachers";
+  //  Change it to this long path to match your backend's exact prefix!
+  const API_BASE_URL = "https://pariksha-9qjs.onrender.com/api/dashboards/admindashboard/teachers";
 
   // View States
   const [teachers, setTeachers] = useState<Teacher[]>([]);
