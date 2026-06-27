@@ -1,67 +1,41 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-import pypdf
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+import pandas as pd
 import io
-import re
+from database import get_raw_db
 
-# Define the router with the prefix to match your Next.js API requests
 router = APIRouter(prefix="/api/routines", tags=["Exam Routines"])
-
-# In-memory store (Replace with your Neon/SQLAlchemy database calls later)
-# Structure: { "CE-2024": [{"date": "...", "subject": "...", "code": "..."}, ...] }
-routine_storage = {}
 
 @router.get("/")
 async def get_routines(batch: str):
-    """Fetches the routine for a specific batch."""
-    return routine_storage.get(batch, [])
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            query = "SELECT exam_date, subject, subject_code FROM exam_routines WHERE batch_name = %s ORDER BY created_at DESC;"
+            cursor.execute(query, (batch,))
+            records = cursor.fetchall()
+            return [{"Date": r[0], "Subject": r[1], "Code": r[2]} for r in records]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/bulk")
-async def upload_routine(
-    file: UploadFile = File(...),
-    batch: str = Form(...)
-):
-    # 1. Enforce PDF validation
-    if not file.filename.lower().endswith('.pdf'):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="UPLOADER REJECTION: Only official PDF files are allowed!"
-        )
-        
+async def upload_routine(file: UploadFile = File(...), batch: str = Form(...)):
     try:
-        # 2. Extract PDF content
-        pdf_bytes = await file.read()
-        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        df.columns = [c.capitalize() for c in df.columns]
         
-        extracted_rows = []
-        
-        # 3. Simple Parsing Engine
-        # This regex looks for lines that might contain subject codes (e.g., COMP-202)
-        # Adjust the pattern based on your PDF's specific internal text structure
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                lines = text.split('\n')
-                for line in lines:
-                    # Example logic: If a line contains a common code format (e.g., XXX-000)
-                    if re.search(r'[A-Z]{3,4}-\d{3}', line):
-                        # This is a placeholder for your actual splitting logic
-                        # You would extract the Date, Subject, and Code here
-                        extracted_rows.append({
-                            "date": "Parsed Date",  # Extract using regex
-                            "subject": line.split()[0], # Simplify logic
-                            "code": re.search(r'[A-Z]{3,4}-\d{3}', line).group()
-                        })
-        
-        # 4. Save to 'database'
-        routine_storage[batch] = extracted_rows
-        
-        return {
-            "message": f"Exam PDF routine for batch [{batch}] parsed successfully!",
-            "count": len(extracted_rows)
-        }
-        
+        if not all(col in df.columns for col in ['Date', 'Subject', 'Code']):
+            raise ValueError("Excel must contain 'Date', 'Subject', and 'Code' columns.")
+
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM exam_routines WHERE batch_name = %s;", (batch,))
+            for _, row in df.iterrows():
+                cursor.execute(
+                    "INSERT INTO exam_routines (batch_name, exam_date, subject, subject_code) VALUES (%s, %s, %s, %s);",
+                    (batch, str(row['Date']), str(row['Subject']), str(row['Code']))
+                )
+            conn.commit()
+        return {"message": "Routine updated successfully!"}
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=str(e))
