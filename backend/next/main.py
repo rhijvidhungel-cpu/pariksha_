@@ -17,7 +17,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://pariksha-vjxk.vercel.app"], # Your specific frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
