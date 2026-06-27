@@ -43,7 +43,9 @@ async def upload_routine(file: UploadFile = File(...), batch: str = Form(...)):
             cursor.execute("DELETE FROM exam_routines WHERE batch_name = %s;", (batch,))
             
             # Insert using your database's exact column names: subject_name, subject_code
+# UPDATE THIS BLOCK IN routers/exam_routine.py
 for _, row in df.iterrows():
+    # Use explicit column names to ensure data lands in the correct spots
     cursor.execute(
         """
         INSERT INTO exam_routines (
@@ -56,8 +58,8 @@ for _, row in df.iterrows():
         (
             str(batch), 
             str(row['Date']), 
-            str(row['Subject']),  # Explicitly mapping to subject_name
-            str(row['Code'])      # Explicitly mapping to subject_code
+            str(row['Subject']),  # Maps to subject_name
+            str(row['Code'])      # Maps to subject_code
         )
     )
             conn.commit()
