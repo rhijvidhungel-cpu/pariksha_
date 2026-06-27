@@ -39,7 +39,7 @@ export default function TeacherDashboard() {
       <div style={styles.navSection}>
         <h2 style={styles.navHeader}>NAVIGATION MENU</h2>
         <div style={styles.cardContainer}>
-          <button style={styles.navCard} onClick={() => router.push("/teacher/routine")}>
+          <button style={styles.navCard} onClick={() => router.push("/dashboards/teacherdashboard/view_exam_routine")}>
             <span style={styles.cardIcon}>📄</span>
             <h3 style={styles.cardTitle}>Exam Routine</h3>
             <p style={styles.cardDesc}>View date-wise institutional schedules</p>
