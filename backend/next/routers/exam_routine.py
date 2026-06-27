@@ -43,14 +43,23 @@ async def upload_routine(file: UploadFile = File(...), batch: str = Form(...)):
             cursor.execute("DELETE FROM exam_routines WHERE batch_name = %s;", (batch,))
             
             # Insert using your database's exact column names: subject_name, subject_code
-            for _, row in df.iterrows():
-                cursor.execute(
-                    """
-                    INSERT INTO exam_routines (batch_name, exam_date, subject_name, subject_code) 
-                    VALUES (%s, %s, %s, %s);
-                    """,
-                    (batch, str(row['Date']), str(row['Subject']), str(row['Code']))
-                )
+for _, row in df.iterrows():
+    cursor.execute(
+        """
+        INSERT INTO exam_routines (
+            batch_name, 
+            exam_date, 
+            subject_name, 
+            subject_code
+        ) VALUES (%s, %s, %s, %s);
+        """,
+        (
+            str(batch), 
+            str(row['Date']), 
+            str(row['Subject']),  # Explicitly mapping to subject_name
+            str(row['Code'])      # Explicitly mapping to subject_code
+        )
+    )
             conn.commit()
         return {"message": f"Routine for {batch} updated successfully!"}
     except Exception as e:
