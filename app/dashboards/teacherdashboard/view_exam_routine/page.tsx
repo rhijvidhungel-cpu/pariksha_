@@ -8,7 +8,10 @@ export default function TeacherRoutinePage() {
   useEffect(() => {
     fetch(`https://pariksha-9qjs.onrender.com/api/routines?batch=${batch}`)
       .then((res) => res.json())
-      .then((res) => setData(res));
+      .then((res) => {
+        if (Array.isArray(res)) setData(res);
+      })
+      .catch(() => setData([]));
   }, [batch]);
 
   return (
@@ -21,11 +24,15 @@ export default function TeacherRoutinePage() {
           </tr>
         </thead>
         <tbody>
-          {data.map((r, i) => (
+          {data.length > 0 ? data.map((r, i) => (
             <tr key={i} className="text-center border-t">
-              <td className="p-2">{r.Date}</td><td className="p-2">{r.Subject}</td><td className="p-2">{r.Code}</td>
+              <td className="p-2">{r.Date}</td>
+              <td className="p-2">{r.Subject}</td>
+              <td className="p-2">{r.Code}</td>
             </tr>
-          ))}
+          )) : (
+            <tr><td colSpan={3} className="p-4 text-center">No data found</td></tr>
+          )}
         </tbody>
       </table>
     </div>
