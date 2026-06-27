@@ -6,7 +6,7 @@ export default function TeacherRoutinePage() {
   const [batch, setBatch] = useState("CE-2024");
 
   useEffect(() => {
-    fetch(`https://pariksha-9qjs.onrender.com/api/routines?batch=${batch}`)
+    fetch(`https://pariksha-9qjs.onrender.com/api/routines/?batch=${batch}`)
       .then((res) => res.json())
       .then((res) => {
         if (Array.isArray(res)) setData(res);
