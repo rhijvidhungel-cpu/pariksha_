@@ -5,9 +5,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import your routers correctly from the routers folder
+# Import your routers correctly
 from routers import teachers 
-from routers.exam_routine import router as exam_routine_router # ✅ FIXED: Pointing inside the routers folder
+from routers.exam_routine import router as exam_routine_router
 import loginapi
 
 # Import local db pool mapping initialization file
@@ -34,7 +34,7 @@ def safe_get_field(record, key, index=0):
 # Mount the routers to the FastAPI application instance
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
-app.include_router(exam_routine_router) # ✅ This will now mount perfectly!
+app.include_router(exam_routine_router)
 
 @app.get("/api/students")
 def get_students():
