@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db
-from models import Student, ExamHall
+from ..database import get_db
+from ..models import Student, ExamHall
 # Using absolute import relative to your backend root
-from schemas import ExamHallCreate 
+from ..schemas import ExamHallCreate 
 
 router = APIRouter(tags=["Allocation"])
 
