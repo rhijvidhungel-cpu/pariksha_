@@ -54,6 +54,9 @@ def auto_allocate(db: Session = Depends(get_db)):
         
         db.commit()
         return {"status": "success", "allocated": student_idx}
-    except Exception as e:
+except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        # This will give us the full type of error and the message
+        import traceback
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        raise HTTPException(status_code=500, detail=error_msg)
