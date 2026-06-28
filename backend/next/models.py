@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from .database import Base  # Assuming your database.py defines a 'Base'
+from database import Base  # Assuming your database.py defines a 'Base'
 
 class ExamHall(Base):
     __tablename__ = "exam_halls"
