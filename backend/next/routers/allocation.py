@@ -28,16 +28,24 @@ def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
 @router.post("/auto-allocate")
 def auto_allocate(db: Session = Depends(get_db)):
     try:
+        # 1. Perform bulk update
         db.query(Student).update({"room_id": None, "seat_number": None}, synchronize_session=False)
         db.commit()
         
+        # 2. CRITICAL: Expire all to clear stale objects
+        db.expire_all() 
+        
+        # 3. Refetch fresh data
         students = db.query(Student).all()
         halls = db.query(ExamHall).order_by(ExamHall.hall_id).all()
         
-        if not students:
-            return {"status": "success", "message": "No students found."}
-        if not halls:
-            raise HTTPException(status_code=400, detail="No exam halls configured.")
+        # ... rest of your loop ...
+        
+        db.commit()
+        return {"status": "success", "allocated": student_idx}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
         student_idx = 0
         for hall in halls:

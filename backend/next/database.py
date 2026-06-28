@@ -16,8 +16,10 @@ SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:
 # Change your engine initialization to this:
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
-    pool_pre_ping=True,  # This tests the connection before using it
-    pool_recycle=300     # Recycles connections every 5 minutes
+    pool_pre_ping=True,
+    pool_recycle=60,         # Recycle every 60 seconds
+    pool_size=5,             # Keep a small pool
+    max_overflow=10
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
