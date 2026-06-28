@@ -13,7 +13,12 @@ load_dotenv()
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:rhijvi123@localhost:5432/pariksha")
 
 # 1. Setup SQLAlchemy (for ORM models)
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Change your engine initialization to this:
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, 
+    pool_pre_ping=True,  # This tests the connection before using it
+    pool_recycle=300     # Recycles connections every 5 minutes
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
