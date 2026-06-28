@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
-from schemas import ExamHallCreate  # Import the schema
+from ..schemas import ExamHallCreate
 
 router = APIRouter(tags=["Allocation"])
 
@@ -25,27 +25,20 @@ def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Endpoint to auto-allocate students ---
+# --- Endpoint to auto-allocate students ---
 @router.post("/auto-allocate")
 def auto_allocate(db: Session = Depends(get_db)):
     try:
-        # 1. Perform bulk update
         db.query(Student).update({"room_id": None, "seat_number": None}, synchronize_session=False)
         db.commit()
         
-        # 2. CRITICAL: Expire all to clear stale objects
-        db.expire_all() 
-        
-        # 3. Refetch fresh data
         students = db.query(Student).all()
         halls = db.query(ExamHall).order_by(ExamHall.hall_id).all()
         
-        # ... rest of your loop ...
-        
-        db.commit()
-        return {"status": "success", "allocated": student_idx}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        if not students:
+            return {"status": "success", "message": "No students found."}
+        if not halls:
+            raise HTTPException(status_code=400, detail="No exam halls configured.")
 
         student_idx = 0
         for hall in halls:
@@ -62,9 +55,8 @@ def auto_allocate(db: Session = Depends(get_db)):
         
         db.commit()
         return {"status": "success", "allocated": student_idx}
-except Exception as e:
+    
+    except Exception as e:
         db.rollback()
-        # This will give us the full type of error and the message
-        import traceback
-        error_msg = f"{type(e).__name__}: {str(e)}"
-        raise HTTPException(status_code=500, detail=error_msg)
+        # Ensure this block is indented 4 spaces relative to the 'try'
+        raise HTTPException(status_code=500, detail=str(e))
