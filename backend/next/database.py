@@ -11,7 +11,7 @@ LOCAL_DB_PARAMS = {
     "password": "rhijvi123", 
     "port": "5432"
 }
-
+Base = declarative_base()
 @contextmanager
 def get_raw_db():
     """Context manager that connects via DATABASE_URL with SSL enforcement for cloud, or falls back to local."""
