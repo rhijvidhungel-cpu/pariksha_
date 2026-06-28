@@ -4,7 +4,7 @@ from database import get_db
 from models import Student, ExamHall
 from schemas import ExamHallCreate  # Import the schema
 
-router = APIRouter(prefix="/rooms", tags=["Allocation"])
+router = APIRouter(tags=["Allocation"])
 
 # --- Endpoint to create a new classroom blueprint ---
 @router.post("/")
