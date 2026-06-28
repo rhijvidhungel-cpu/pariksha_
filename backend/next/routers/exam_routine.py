@@ -9,34 +9,32 @@ router = APIRouter(prefix="/api/routines", tags=["Exam Routines"])
 
 @router.get("")
 async def get_routines(batch: str):
-    conn = None
+    # If get_raw_db() is a generator, we must use it as a context manager 
+    # and assign the connection correctly.
     try:
-        # Get the connection directly
-        conn = get_raw_db()
-        cursor = conn.cursor()
-        
-        query = """
-            SELECT exam_date, subject_name, subject_code
-            FROM exam_routines
-            WHERE batch_name = %s
-            ORDER BY exam_date ASC;
-        """
-        cursor.execute(query, (batch,))
-        records = cursor.fetchall()
-        
-        # Close cursor explicitly
-        cursor.close()
-        
-        return [{"Date": str(r[0]), "Subject": str(r[1]), "Code": str(r[2])} for r in records]
+        # Use the 'with' statement correctly
+        with get_raw_db() as conn:
+            # If conn is the connection object directly:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT exam_date, subject_name, subject_code
+                FROM exam_routines
+                WHERE batch_name = %s
+                ORDER BY exam_date ASC;
+            """
+            cursor.execute(query, (batch,))
+            records = cursor.fetchall()
+            
+            # Map the results
+            results = [{"Date": str(r[0]), "Subject": str(r[1]), "Code": str(r[2])} for r in records]
+            
+            cursor.close()
+            return results
 
     except Exception as e:
-        # This will now print the actual error in your logs instead of just '0'
-        logger.error(f"DETAILED ERROR: {str(e)}")
+        logger.error(f"Database error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        # Ensure connection is closed/returned to pool
-        if conn:
-            conn.close()
 
 @router.post("/bulk")
 async def upload_routine(file: UploadFile = File(...), batch: str = Form(...)):
