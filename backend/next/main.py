@@ -6,7 +6,8 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import your routers correctly
-from routers import teachers,allocation
+from routers import teachers
+from routers.allocation import router as allocation_router
 from routers.exam_routine import router as exam_routine_router
 import loginapi
 
@@ -35,7 +36,7 @@ def safe_get_field(record, key, index=0):
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
 app.include_router(exam_routine_router)
-app.include_router(allocation.router, prefix="/rooms")
+app.include_router(allocation_router, prefix="/rooms")
 
 @app.get("/api/students")
 def get_students():

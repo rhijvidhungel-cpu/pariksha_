@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+# Ensure these imports match your absolute path structure
 from database import get_db
 from models import Student, ExamHall
 
@@ -8,8 +9,9 @@ router = APIRouter(prefix="/rooms", tags=["Allocation"])
 @router.post("/auto-allocate")
 def auto_allocate(db: Session = Depends(get_db)):
     try:
-        # 1. Reset all existing allocations
-        db.query(Student).update({"room_id": None, "seat_number": None})
+        # 1. Reset all existing allocations using bulk update for efficiency
+        db.query(Student).update({"room_id": None, "seat_number": None}, synchronize_session=False)
+        db.commit() # Commit reset first
         
         # 2. Fetch all students and halls
         students = db.query(Student).all()
@@ -23,11 +25,14 @@ def auto_allocate(db: Session = Depends(get_db)):
         # 3. Allocation Algorithm
         student_idx = 0
         for hall in halls:
-            # Check if hall has necessary capacity fields
-            # Ensure hall.rows_count etc. exist in your database table
-            for r in range(1, (getattr(hall, 'rows_count', 0) or 0) + 1):
-                for b in range(1, (getattr(hall, 'benches_per_row', 0) or 0) + 1):
-                    for s in range(1, (getattr(hall, 'seats_per_bench', 0) or 0) + 1):
+            # Use safe defaults for room dimensions
+            rows = hall.rows_count or 0
+            benches = hall.benches_per_row or 0
+            seats = hall.seats_per_bench or 0
+            
+            for r in range(1, rows + 1):
+                for b in range(1, benches + 1):
+                    for s in range(1, seats + 1):
                         if student_idx < len(students):
                             student = students[student_idx]
                             student.room_id = hall.hall_id
@@ -37,6 +42,7 @@ def auto_allocate(db: Session = Depends(get_db)):
             if student_idx >= len(students):
                 break
         
+        # 4. Commit all student object changes
         db.commit()
         return {
             "status": "success", 
@@ -45,4 +51,4 @@ def auto_allocate(db: Session = Depends(get_db)):
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Allocation failed: {str(e)}")
