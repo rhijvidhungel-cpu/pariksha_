@@ -35,7 +35,7 @@ def safe_get_field(record, key, index=0):
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
 app.include_router(exam_routine_router)
-app.include_router(allocation.router, prefix="/rooms", tags=["Rooms"])
+app.include_router(allocation.router, prefix="/rooms")
 
 @app.get("/api/students")
 def get_students():
