@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
-from ..schemas import ExamHallCreate
+# Using absolute import relative to your backend root
+from schemas import ExamHallCreate 
 
 router = APIRouter(tags=["Allocation"])
 
-# --- Endpoint to create a new classroom blueprint ---
 @router.post("/")
 def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
     try:
@@ -24,8 +24,6 @@ def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- Endpoint to auto-allocate students ---
-# --- Endpoint to auto-allocate students ---
 @router.post("/auto-allocate")
 def auto_allocate(db: Session = Depends(get_db)):
     try:
@@ -42,21 +40,22 @@ def auto_allocate(db: Session = Depends(get_db)):
 
         student_idx = 0
         for hall in halls:
-            for r in range(1, (hall.rows_count or 0) + 1):
-                for b in range(1, (hall.benches_per_row or 0) + 1):
-                    for s in range(1, (hall.seats_per_bench or 0) + 1):
+            rows = int(hall.rows_count or 0)
+            benches = int(hall.benches_per_row or 0)
+            seats = int(hall.seats_per_bench or 0)
+            
+            for r in range(1, rows + 1):
+                for b in range(1, benches + 1):
+                    for s in range(1, seats + 1):
                         if student_idx < len(students):
-                            student = students[student_idx]
-                            student.room_id = hall.hall_id
-                            student.seat_number = f"R{r}-B{b}-S{s}"
+                            students[student_idx].room_id = hall.hall_id
+                            students[student_idx].seat_number = f"R{r}-B{b}-S{s}"
                             student_idx += 1
             if student_idx >= len(students):
                 break
         
         db.commit()
         return {"status": "success", "allocated": student_idx}
-    
     except Exception as e:
         db.rollback()
-        # Ensure this block is indented 4 spaces relative to the 'try'
         raise HTTPException(status_code=500, detail=str(e))
