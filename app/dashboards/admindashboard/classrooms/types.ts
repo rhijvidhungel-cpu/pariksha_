@@ -1,3 +1,5 @@
+// types.ts
+
 export interface StudentRoster {
   id: string;
   seatNumber: string;
@@ -5,15 +7,32 @@ export interface StudentRoster {
   name: string;
   department: string;
   batch: string;
+  room_id?: number | null; // Added to match the backend allocation model
 }
 
 export interface ExamRoom {
+  // Database fields (what comes from the backend)
+  hall_id: number;
+  room_no: string;
+  rows_count: number;
+  benches_per_row: number;
+  seats_per_bench: number;
+  capacity: number;
+  tables: number; // Added to match your calculation logic
+
+  // Frontend UI fields (the fields used for mapping/display)
   id: string | number;
   name: string;
-  rows_count: number;       // Number of rows of benches
-  benches_per_row: number;  // Benches lined up horizontally per row
-  seats_per_bench: number;  // Students sitting at one bench
-  capacity: number;         // Total Capacity = rows * benches * seats
   allocatedStudentsCount: number;
   status: 'Available' | 'Full';
+}
+
+// Helper type for creating a new room
+export interface ExamHallCreate {
+  room_no: string;
+  rows_count: number;
+  benches_per_row: number;
+  seats_per_bench: number;
+  capacity: number;
+  tables: number;
 }

@@ -66,23 +66,35 @@ export default function ClassroomsManagement() {
   }, [router]);
 
   
-  const fetchRooms = async () => {
-    try {
-      setLoading(true);
-      setErrorMessage(null);
-      const res = await fetch(`${apiBaseUrl}/rooms/`);
-      if (res.ok) {
-        const data = await res.json();
-        setRooms(data);
-      } else {
-        throw new Error("Could not fetch classrooms records.");
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to load classroom records.");
-    } finally {
-      setLoading(false);
+const fetchRooms = async () => {
+  try {
+    setLoading(true);
+    setErrorMessage(null);
+    const res = await fetch(`${apiBaseUrl}/rooms/`);
+    
+    if (res.ok) {
+      const data = await res.json();
+      
+      // Map the backend data to the structure your UI expects
+      const formattedRooms = data.map((room) => ({
+        id: room.hall_id,
+        name: room.room_no,       // Mapping 'room_no' to 'name'
+        rows: room.rows_count,    // Mapping 'rows_count' to 'rows'
+        benches: room.benches_per_row,
+        seats: room.seats_per_bench,
+        capacity: room.capacity
+      }));
+      
+      setRooms(formattedRooms);
+    } else {
+      throw new Error("Could not fetch classrooms records.");
     }
-  };
+  } catch (err: any) {
+    setErrorMessage(err.message || "Failed to load classroom records.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Fetch roster & seating layout for a single room
   const handleViewRoomDetails = async (room: ExamRoom) => {
