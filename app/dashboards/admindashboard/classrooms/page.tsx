@@ -65,7 +65,7 @@ export default function ClassroomsManagement() {
     fetchRooms();
   }, [router]);
 
-  // Fetch all rooms
+  
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -118,6 +118,7 @@ try {
     rows_count: rowsCount,
     benches_per_row: benchesPerRow,
     seats_per_bench: seatsPerBench,
+    capacity: rowsCount * benchesPerRow * seatsPerBench,
   }),
 });
 
