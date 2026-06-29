@@ -5,3 +5,4 @@ class ExamHallCreate(BaseModel):
     rows_count: int
     benches_per_row: int
     seats_per_bench: int
+    capacity: int  

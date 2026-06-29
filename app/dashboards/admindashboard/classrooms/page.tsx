@@ -105,23 +105,21 @@ export default function ClassroomsManagement() {
   };
 
   // Create room handler
-  const handleCreateRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleCreateRoom = async (e: React.FormEvent) => {
+  e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
-
-    try {
-      const res = await fetch(`${apiBaseUrl}/rooms`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: roomName,
-          rows_count: rowsCount,
-          benches_per_row: benchesPerRow,
-          seats_per_bench: seatsPerBench,
-          capacity: calculatedCapacity,
-        }),
-      });
+try {
+    const res = await fetch(`${apiBaseUrl}/rooms/`, { 
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    room_no: roomName,           // Corrected key
+    rows_count: rowsCount,
+    benches_per_row: benchesPerRow,
+    seats_per_bench: seatsPerBench,
+  }),
+});
 
       const data = await res.json();
       if (res.ok) {
@@ -159,17 +157,18 @@ export default function ClassroomsManagement() {
     setSuccessMessage(null);
 
     try {
-      const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: roomName,
-          rows_count: rowsCount,
-          benches_per_row: benchesPerRow,
-          seats_per_bench: seatsPerBench,
-          capacity: calculatedCapacity,
-        }),
-      });
+      // Around line 161
+const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added trailing slash
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    room_no: roomName,           // Corrected key
+    rows_count: rowsCount,
+    benches_per_row: benchesPerRow,
+    seats_per_bench: seatsPerBench,
+    
+  }),
+});
 
       const data = await res.json();
       if (res.ok) {
