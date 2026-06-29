@@ -7,3 +7,4 @@ openpyxl
 email-validator
 pypdf==4.2.0
 python-multipart==0.0.9
+python-dotenv

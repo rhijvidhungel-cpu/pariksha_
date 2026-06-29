@@ -1,13 +1,15 @@
-import io
-import os
+
 import traceback
 import pandas as pd
+
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import your routers correctly from the routers folder
-from routers import teachers 
-from routers.exam_routine import router as exam_routine_router # ✅ FIXED: Pointing inside the routers folder
+# Import your routers correctly
+from routers import teachers
+from routers.allocation import router as allocation_router
+from routers.exam_routine import router as exam_routine_router
 import loginapi
 
 # Import local db pool mapping initialization file
@@ -17,7 +19,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://pariksha-vjxk.vercel.app"], # Your specific frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,7 +36,8 @@ def safe_get_field(record, key, index=0):
 # Mount the routers to the FastAPI application instance
 app.include_router(teachers.router)
 app.include_router(loginapi.router) 
-app.include_router(exam_routine_router) # ✅ This will now mount perfectly!
+app.include_router(exam_routine_router)
+app.include_router(allocation_router, prefix="/rooms/")
 
 @app.get("/api/students")
 def get_students():

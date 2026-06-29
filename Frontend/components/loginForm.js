@@ -15,7 +15,7 @@ const LoginForm = () => {
         e.preventDefault();
 
         try {
-            const apiBaseUrl = "https://pariksha-9qjs.onrender.com";
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${apiBaseUrl}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

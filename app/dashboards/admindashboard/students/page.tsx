@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Student {
-  sn: number;
+  id: string; 
   name: string;
   roll: string;
   batch: string;
@@ -14,17 +14,17 @@ export default function StudentsManagement() {
 
   // State Management
   const [students, setStudents] = useState<Student[]>([]);
-  const [batches, setBatches] = useState<string[]>(["CE-2024", "CS-2020", "ME-2023"]);
+  const [batches, setBatches] = useState<string[]>([]); 
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   
-  // Active viewing/inserting batch filter (Defaults to CE-2024)
-  const [currentBatchView, setCurrentBatchView] = useState("CE-2024");
+  // Active viewing/inserting batch filter
+  const [currentBatchView, setCurrentBatchView] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   // Inline Editing States
-  const [editingSn, setEditingSn] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null); // ✅ Tracks string references
   const [editName, setEditName] = useState("");
   const [editRoll, setEditRoll] = useState("");
 
@@ -41,11 +41,13 @@ export default function StudentsManagement() {
       if (res.ok) {
         const data = await res.json();
         
-        const normalizedData = data.map((item: any) => {
+        const normalizedData = data.map((item: any, idx: number) => {
           const rawRoll = safeGetField(item, 'roll', 2) || "";
+          const dbSn = safeGetField(item, 'sn', 0);
           return {
-            sn: safeGetField(item, 'sn', 0),
-            name: safeGetField(item, 'name', 1),
+            // ✅ Fix: Generate a guaranteed unique client-side key using index combined with database fallback
+            id: dbSn ? String(dbSn) : `student-${idx}`,
+            name: safeGetField(item, 'name', 1) || "Unknown",
             roll: rawRoll.includes('-') ? rawRoll.split('-')[0] : rawRoll,
             batch: safeGetField(item, 'batch', 3) || "N/A"
           };
@@ -60,20 +62,20 @@ export default function StudentsManagement() {
     }
   };
 
-  const fetchBatches = async () => {
+const fetchBatches = async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/api/batches`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
           setBatches(data);
+          setCurrentBatchView((prev) => (prev ? prev : data[0]));
         }
       }
     } catch (err) {
       console.error("Failed to sync batches from server:", err);
     }
   };
-
   useEffect(() => {
     fetchDirectory();
     fetchBatches();
@@ -81,7 +83,7 @@ export default function StudentsManagement() {
 
   const handleExcelUploadEngine = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !currentBatchView) return;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -172,6 +174,7 @@ export default function StudentsManagement() {
   };
 
   const handlePurgeEntireBatch = async () => {
+    if (!currentBatchView) return;
     if (!confirm(`⚠️ CRITICAL WARNING!!! Are you absolutely sure you want to delete EVERY student inside batch [${currentBatchView}]? This cannot be undone.`)) return;
     
     try {
@@ -195,12 +198,12 @@ export default function StudentsManagement() {
   };
 
   const startEditing = (student: Student) => {
-    setEditingSn(student.sn);
+    setEditingId(student.id);
     setEditName(student.name);
     setEditRoll(student.roll);
   };
 
-  const handleSaveEdit = async (studentSn: number, currentBatch: string) => {
+  const handleSaveEdit = async (studentId: string, currentBatch: string) => {
     if (!editName.trim() || !editRoll.trim()) return;
 
     try {
@@ -209,7 +212,7 @@ export default function StudentsManagement() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          student_id: studentSn,
+          student_id: parseInt(studentId, 10) || 0,
           new_name: editName.trim(),
           new_roll: editRoll.trim(),
           batch: currentBatch
@@ -217,7 +220,7 @@ export default function StudentsManagement() {
       });
 
       if (res.ok) {
-        setEditingSn(null);
+        setEditingId(null);
         fetchDirectory();
       } else {
         const data = await res.json();
@@ -257,8 +260,12 @@ export default function StudentsManagement() {
     if (matchesExplicitBatchSearch) return true;
 
     return s.batch?.toLowerCase() === currentBatchView.toLowerCase() && matchesSearchTerm;
+  }).sort((a, b) => {
+    // ✅ Automatically sort students numerically by their Roll ID Number
+    const rollA = parseInt(a.roll, 10) || 0;
+    const rollB = parseInt(b.roll, 10) || 0;
+    return rollA - rollB;
   });
-
   return (
     <div className="p-8 flex flex-col gap-6 w-full max-w-[1400px] mx-auto">
       
@@ -280,25 +287,27 @@ export default function StudentsManagement() {
               </select>
             </div>
           </div>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">Currently targeting batch pool <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView}</span>.</p>
+          <p className="text-xs text-gray-400 font-medium mt-0.5">Currently targeting batch pool <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView || "None"}</span>.</p>
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
           <button 
             onClick={handlePurgeEntireBatch}
-            className="bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
+            disabled={!currentBatchView}
+            className="bg-[#E11D48] hover:bg-[#BE123C] disabled:bg-gray-300 text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
           >
-            💥 Wipe Entire {currentBatchView} List
+            💥 Wipe Entire {currentBatchView || "Batch"} List
           </button>
 
           <label 
             htmlFor="excel-upload-trigger" 
-            className="bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11"
+            className={`bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11 ${!currentBatchView ? "pointer-events-none opacity-50" : ""}`}
           >
-            <span>📊 Bulk Parse Students into {currentBatchView}</span>
+            <span>📊 Bulk Parse Students into {currentBatchView || "Batch"}</span>
             <input 
               id="excel-upload-trigger" 
               type="file" 
+              disabled={!currentBatchView}
               accept=".xlsx, .csv" 
               onChange={handleExcelUploadEngine} 
               className="hidden" 
@@ -311,7 +320,7 @@ export default function StudentsManagement() {
         
         {/* MANUAL MANIPULATION PANEL */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
-          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView}</h3>
+          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView || "Directory"}</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Full Student Name</label>
@@ -336,8 +345,8 @@ export default function StudentsManagement() {
               />
             </div>
             
-            <button type="submit" className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
-              + Insert Into {currentBatchView} Directory
+            <button type="submit" disabled={!currentBatchView} className="w-full mt-2 bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-gray-300 text-white text-xs font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98]">
+              + Insert Into {currentBatchView || "Batch"} Directory
             </button>
           </form>
         </div>
@@ -370,12 +379,13 @@ export default function StudentsManagement() {
                 {loading ? (
                   <tr><td colSpan={5} className="p-8 text-center text-gray-400">Syncing live directory tables...</td></tr>
                 ) : filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
-                    <tr key={student.sn} className="hover:bg-gray-50/40 transition-colors">
-                      <td className="p-4 text-center text-gray-400 font-normal">{student.sn}</td>
+                  filteredStudents.map((student, index) => (
+                    <tr key={student.id} className="hover:bg-gray-50/40 transition-colors">
+                      {/* ✅ FORCE EXACT POSITIONAL INDEX: This guarantees rendering 1, 2, 3... */}
+                      <td className="p-4 text-center text-gray-400 font-normal">{index + 1}</td>
                       
                       <td className="p-4 font-bold text-gray-900">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <input 
                             type="text" 
                             value={editName} 
@@ -388,7 +398,7 @@ export default function StudentsManagement() {
                       </td>
                       
                       <td className="p-4 text-gray-600 font-mono">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <input 
                             type="text" 
                             value={editRoll} 
@@ -405,10 +415,10 @@ export default function StudentsManagement() {
                       </td>
                       
                       <td className="p-4 text-center flex items-center justify-center gap-3">
-                        {editingSn === student.sn ? (
+                        {editingId === student.id ? (
                           <>
-                            <button onClick={() => handleSaveEdit(student.sn, student.batch)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline">Save</button>
-                            <button onClick={() => setEditingSn(null)} className="text-gray-400 hover:text-gray-600 text-xs font-bold hover:underline">Cancel</button>
+                            <button onClick={() => handleSaveEdit(student.id, student.batch)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline">Save</button>
+                            <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600 text-xs font-bold hover:underline">Cancel</button>
                           </>
                         ) : (
                           <>
