@@ -1,13 +1,3 @@
-// types.ts
-
-export interface ExamRoom {
-  id: string;
-  name: string;
-  capacity: number;
-  allocatedStudentsCount: number;
-  status: 'Available' | 'Full';
-}
-
 export interface StudentRoster {
   id: string;
   seatNumber: string;
@@ -17,9 +7,13 @@ export interface StudentRoster {
   batch: string;
 }
 
-export interface SummaryCards {
-  totalRooms: number;
-  totalStudentsAllocated: number;
-  totalSeats: number;
-  availableSeats: number;
+export interface ExamRoom {
+  id: string | number;
+  name: string;
+  rows_count: number;       // Number of rows of benches
+  benches_per_row: number;  // Benches lined up horizontally per row
+  seats_per_bench: number;  // Students sitting at one bench
+  capacity: number;         // Total Capacity = rows * benches * seats
+  allocatedStudentsCount: number;
+  status: 'Available' | 'Full';
 }
