@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Student {
-  id: string; // ✅ Changed key parameter name to prevent any fallback variable conflicts
+  id: string; 
   name: string;
   roll: string;
   batch: string;

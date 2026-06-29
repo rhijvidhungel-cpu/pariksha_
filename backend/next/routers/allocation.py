@@ -8,7 +8,7 @@ from models import Student, ExamHall
 from schemas import ExamHallCreate
 router = APIRouter(tags=["Allocation"])
 
-@router.post("/")  
+@router.post("/",include_in_schema=True)  
 def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
     try:
         new_hall = ExamHall(

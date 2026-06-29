@@ -70,7 +70,7 @@ export default function ClassroomsManagement() {
     try {
       setLoading(true);
       setErrorMessage(null);
-      const res = await fetch(`${apiBaseUrl}/rooms`);
+      const res = await fetch(`${apiBaseUrl}/rooms/`);
       if (res.ok) {
         const data = await res.json();
         setRooms(data);
@@ -166,6 +166,7 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
     rows_count: rowsCount,
     benches_per_row: benchesPerRow,
     seats_per_bench: seatsPerBench,
+    capacity: rowsCount * benchesPerRow * seatsPerBench,
     
   }),
 });
