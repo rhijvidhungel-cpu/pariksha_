@@ -1,13 +1,9 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
-from schemas import ExamHallCreate
-
+from backend.next.schemas import ExamHallCreate
 router = APIRouter(tags=["Allocation"])
 
 @router.post("/")
