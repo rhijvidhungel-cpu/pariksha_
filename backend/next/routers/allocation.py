@@ -8,14 +8,15 @@ from models import Student, ExamHall
 from schemas import ExamHallCreate
 router = APIRouter(tags=["Allocation"])
 
-@router.post("/",include_in_schema=True)  
+@router.post("/", include_in_schema=True) 
 def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
     try:
         new_hall = ExamHall(
             room_no=room_data.room_no,
             rows_count=room_data.rows_count,
             benches_per_row=room_data.benches_per_row,
-            seats_per_bench=room_data.seats_per_bench
+            seats_per_bench=room_data.seats_per_bench,
+            capacity=room_data.capacity  # <--- THIS WAS MISSING
         )
         db.add(new_hall)
         db.commit()
