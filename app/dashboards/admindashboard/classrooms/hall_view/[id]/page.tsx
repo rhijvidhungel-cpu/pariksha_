@@ -31,11 +31,62 @@ export default function HallView() {
   if (!hall) return <div>Loading...</div>;
 
   return (
-    <div>
-      <h2>Room: {hall.room_no}</h2>
-      <p>Rows: {hall.rows_count}</p>
-      <p>Benches: {hall.benches_per_row}</p>
-      <p>Seats per bench: {hall.seats_per_bench}</p>
-    </div>
-  );
-}
+  <div style={{ padding: "20px" }}>
+    <h2 style={{ fontWeight: "bold", marginBottom: "20px" }}>
+      Room: {hall.room_no}
+    </h2>
+
+    {/* ROWS */}
+    {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
+      <div
+        key={rowIndex}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "20px",
+          gap: "15px",
+        }}
+      >
+        {/* Row label */}
+        <div style={{ width: "60px", fontWeight: "bold" }}>
+          Row {rowIndex + 1}
+        </div>
+
+        {/* Benches */}
+        {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
+          <div
+            key={benchIndex}
+            style={{
+              display: "flex",
+              border: "2px solid #333",
+              padding: "10px",
+              borderRadius: "8px",
+              gap: "5px",
+              background: "#f9f9f9",
+            }}
+          >
+            {/* Seats */}
+            {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => (
+              <div
+                key={seatIndex}
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  backgroundColor: "#ddd",
+                  border: "1px solid #999",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                }}
+              >
+                S
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+);}
