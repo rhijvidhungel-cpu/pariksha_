@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 export default function HallView() {
   const params = useParams();
-  const roomId = params.hall_id; // IMPORTANT FIX
+  const roomId = params.id; // IMPORTANT FIX
 
   const [hall, setHall] = useState<any>(null);
 
