@@ -8,24 +8,38 @@ from models import Student, ExamHall
 from schemas import ExamHallCreate
 router = APIRouter(tags=["Allocation"])
 
-@router.post("/", include_in_schema=True) 
+@router.post("/", include_in_schema=True)
 def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
+    print("ROOM RECEIVED:", room_data)
+
     try:
         new_hall = ExamHall(
             room_no=room_data.room_no,
             rows_count=room_data.rows_count,
             benches_per_row=room_data.benches_per_row,
             seats_per_bench=room_data.seats_per_bench,
-            capacity=room_data.capacity  # <--- THIS WAS MISSING
+            capacity=room_data.capacity
         )
+
         db.add(new_hall)
         db.commit()
         db.refresh(new_hall)
-        return {"status": "success", "message": "Room created", "hall_id": new_hall.hall_id}
+
+        print("ROOM SAVED:", new_hall.hall_id)
+
+        return {
+            "status": "success",
+            "message": "Room created",
+            "hall_id": new_hall.hall_id
+        }
+
     except Exception as e:
         db.rollback()
+        print("ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
-
+@router.get("/test")
+def test():
+    return {"message": "Allocation router is working"}
 @router.post("/auto-allocate")
 def auto_allocate(db: Session = Depends(get_db)):
     try:
@@ -61,3 +75,9 @@ def auto_allocate(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+@router.get("/")
+def get_rooms(db: Session = Depends(get_db)):
+    # Fetch all exam halls from the database
+    halls = db.query(ExamHall).all()
+    # Return them in a format the frontend can easily read
+    return halls
