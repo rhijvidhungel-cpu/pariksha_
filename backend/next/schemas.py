@@ -7,3 +7,12 @@ class ExamHallCreate(BaseModel):
     benches_per_row: int
     seats_per_bench: int
     capacity: Optional[int] = None # Allows the backend to accept the request
+
+    from pydantic import BaseModel
+
+class BatchResponse(BaseModel):
+    batch_id: int
+    batch_name: str
+
+    class Config:
+        from_attributes = True

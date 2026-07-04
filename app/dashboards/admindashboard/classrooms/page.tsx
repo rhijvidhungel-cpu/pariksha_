@@ -421,7 +421,11 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
                 return (
                   <div
                     key={room.id}
-                    onClick={() => handleViewRoomDetails(room)}
+                    onClick={() =>
+  router.push(
+    `/dashboards/admindashboard/classroom/hall_view?id=${room.id}`
+  )
+}
                     className={`bg-white border p-5 rounded-2xl cursor-pointer hover:border-indigo-300 transition-all shadow-xs flex flex-col gap-3 relative overflow-hidden ${
                       isSelected ? "border-indigo-600 ring-2 ring-indigo-100" : "border-gray-200"
                     }`}

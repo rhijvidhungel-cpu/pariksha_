@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Import your routers correctly
 from routers import teachers
 from routers.allocation import router as allocation_router
+from routers import batches
 from routers.exam_routine import router as exam_routine_router
 import loginapi
 
@@ -38,6 +39,7 @@ app.include_router(teachers.router)
 app.include_router(loginapi.router) 
 app.include_router(exam_routine_router)
 app.include_router(allocation_router, prefix="/rooms")
+app.include_router(batches.router)
 
 @app.get("/api/students")
 def get_students():

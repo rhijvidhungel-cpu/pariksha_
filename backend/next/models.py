@@ -16,3 +16,11 @@ class Student(Base):
     full_name = Column(String)
     room_id = Column(Integer, ForeignKey("exam_halls.hall_id"))
     seat_number = Column(String)
+class Batch(Base):
+    __tablename__ = "batches"
+
+    batch_id = Column(Integer, primary_key=True)
+    batch_name = Column(String)
+    start_year = Column(Integer)
+    end_year = Column(Integer)
+    department_id = Column(Integer)
