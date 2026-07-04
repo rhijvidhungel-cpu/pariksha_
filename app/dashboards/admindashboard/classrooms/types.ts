@@ -7,27 +7,32 @@ export interface StudentRoster {
   name: string;
   department: string;
   batch: string;
-  room_id?: number | null;
+  room_id?: number | null; // Added to match the backend allocation model
 }
 
 export interface ExamRoom {
-  // Backend database fields
-  id: number;
+  // Database fields (what comes from the backend)
+  hall_id: number;
   room_no: string;
   rows_count: number;
   benches_per_row: number;
   seats_per_bench: number;
   capacity: number;
-  
-  // Frontend UI display fields
+  tables: number; // Added to match your calculation logic
+
+  // Frontend UI fields (the fields used for mapping/display)
+  id: string | number;
+  name: string;
   allocatedStudentsCount: number;
   status: 'Available' | 'Full';
 }
 
+// Helper type for creating a new room
 export interface ExamHallCreate {
   room_no: string;
   rows_count: number;
   benches_per_row: number;
   seats_per_bench: number;
   capacity: number;
+  tables: number;
 }

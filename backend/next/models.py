@@ -8,6 +8,7 @@ class ExamHall(Base):
     rows_count = Column(Integer)
     benches_per_row = Column(Integer)
     seats_per_bench = Column(Integer)
+    capacity = Column(Integer, nullable=False)
 
 class Student(Base):
     __tablename__ = "students"
