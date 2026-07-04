@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
 from schemas import ExamHallCreate
+print("ExamHall imported from:", ExamHall.__module__)
+print("ExamHall columns:", ExamHall.__table__.columns.keys())
 router = APIRouter(tags=["Allocation"])
 
 @router.post("/", include_in_schema=True)
