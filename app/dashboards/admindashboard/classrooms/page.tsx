@@ -91,7 +91,7 @@ const formattedRooms: ExamRoom[] = data.map((room: any) => ({
       throw new Error("Could not fetch classrooms records.");
     }
   } catch (err: any) {
-    setErrorMessage(err.message || "Failed to load classroom records.");
+    setErrorMessage(err.message || "Failed to load classrooms records.");
   } finally {
     setLoading(false);
   }
@@ -99,7 +99,7 @@ const formattedRooms: ExamRoom[] = data.map((room: any) => ({
 
   // Fetch roster & seating layout for a single room
   const handleViewRoomDetails = (room: ExamRoom) => {
-  router.push(`/dashboards/admindashboard/classroom/hall_view/${room.id}`);
+  router.push(`/dashboards/admindashboard/classrooms/hall_view/${room.id}`);
 };
 
   // Create room handler
@@ -408,7 +408,7 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
 key={room.id}
 onClick={() =>
   router.push(
-    `/dashboards/admindashboard/classroom/hall_view/${room.id}`
+    `/dashboards/admindashboard/classrooms/hall_view/${room.id}`
   )
 }
                     className={`bg-white border p-5 rounded-2xl cursor-pointer hover:border-indigo-300 transition-all shadow-xs flex flex-col gap-3 relative overflow-hidden ${
