@@ -15,6 +15,7 @@ def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
     print("ROOM RECEIVED:", room_data)
 
     try:
+        print("ExamHall table columns:", ExamHall.__table__.columns.keys())
         new_hall = ExamHall(
             room_no=room_data.room_no,
             rows_count=room_data.rows_count,
@@ -24,7 +25,9 @@ def create_room(room_data: ExamHallCreate, db: Session = Depends(get_db)):
         )
 
         db.add(new_hall)
+        print("Added to session")
         db.commit()
+        print("Committed successfully")
         db.refresh(new_hall)
 
         print("ROOM SAVED:", new_hall.hall_id)
