@@ -98,24 +98,9 @@ const formattedRooms: ExamRoom[] = data.map((room: any) => ({
 };
 
   // Fetch roster & seating layout for a single room
-  const handleViewRoomDetails = async (room: ExamRoom) => {
-    setSelectedRoom(room);
-    setRosterLoading(true);
-    setRoster([]);
-    try {
-      const res = await fetch(`${apiBaseUrl}/rooms/${room.id}/students`);
-      if (res.ok) {
-        const data = await res.json();
-        setRoster(data);
-      } else {
-        throw new Error("Could not fetch seating roster.");
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to load student roster.");
-    } finally {
-      setRosterLoading(false);
-    }
-  };
+  const handleViewRoomDetails = (room: ExamRoom) => {
+  router.push(`/dashboards/admindashboard/classroom/hall_view/${room.id}`);
+};
 
   // Create room handler
 const handleCreateRoom = async (e: React.FormEvent) => {
@@ -420,10 +405,10 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
 
                 return (
                   <div
-                    key={room.id}
-                    onClick={() =>
+key={room.id}
+onClick={() =>
   router.push(
-    `/dashboards/admindashboard/classroom/hall_view?id=${room.id}`
+    `/dashboards/admindashboard/classroom/hall_view/${room.id}`
   )
 }
                     className={`bg-white border p-5 rounded-2xl cursor-pointer hover:border-indigo-300 transition-all shadow-xs flex flex-col gap-3 relative overflow-hidden ${
