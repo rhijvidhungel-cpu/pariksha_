@@ -76,15 +76,16 @@ const fetchRooms = async () => {
       const data = await res.json();
       
       // Map the backend data to the structure your UI expects
-      const formattedRooms = data.map((room) => ({
-        id: room.hall_id,
-        name: room.room_no,       // Mapping 'room_no' to 'name'
-        rows: room.rows_count,    // Mapping 'rows_count' to 'rows'
-        benches: room.benches_per_row,
-        seats: room.seats_per_bench,
-        capacity: room.capacity
-      }));
-      
+const formattedRooms: ExamRoom[] = data.map((room: any) => ({
+    id: room.hall_id,
+    name: room.room_no,
+    rows_count: room.rows_count,
+    benches_per_row: room.benches_per_row,
+    seats_per_bench: room.seats_per_bench,
+    capacity: room.capacity,
+    allocatedStudentsCount: room.allocatedStudentsCount ?? 0,
+    status: room.status ?? "Available",
+}));
       setRooms(formattedRooms);
     } else {
       throw new Error("Could not fetch classrooms records.");
@@ -152,7 +153,6 @@ const handleCreateRoom = async (e: React.FormEvent) => {
         benches_per_row: benchesPerRow,
         seats_per_bench: seatsPerBench,
         capacity: calculatedCapacity,
-        tables: calculatedTables,
         allocatedStudentsCount: 0,
         status: 'Available'
       };
@@ -161,7 +161,7 @@ const handleCreateRoom = async (e: React.FormEvent) => {
       setRooms((prevRooms) => [...prevRooms, newRoom]);
       
       // 4. Close the modal
-      setIsModalOpen(false); 
+      setShowAddModal(false); 
     } else {
       // If the server returns an error, extract the message
       const errorData = await res.json();
@@ -171,24 +171,6 @@ const handleCreateRoom = async (e: React.FormEvent) => {
     setErrorMessage(err.message || "An error occurred while saving.");
   }
 };
-
-      const data = await res.json();
-      if (res.ok) {
-        setSuccessMessage("Room structure recorded successfully!");
-        setShowAddModal(false);
-        // Reset fields
-        setRoomName("");
-        setRowsCount(5);
-        setBenchesPerRow(3);
-        setSeatsPerBench(2);
-        fetchRooms();
-      } else {
-        setErrorMessage(data.detail || "Could not persist layout structure.");
-      }
-    } catch (err: any) {
-      setErrorMessage("Network error: failed to communicate with backend.");
-    }
-  };
 
   // Open edit modal
   const openEditModal = (room: ExamRoom) => {
