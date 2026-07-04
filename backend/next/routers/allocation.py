@@ -90,7 +90,7 @@ def get_rooms(db: Session = Depends(get_db)):
 def get_room(room_id: int, db: Session = Depends(get_db)):
     room = db.query(ExamHall).filter(ExamHall.hall_id == room_id).first()
 
-    if not room:
+    if room is None:
         raise HTTPException(status_code=404, detail="Room not found")
 
     return room
