@@ -320,7 +320,7 @@ def update_student_credentials(payload: dict):
         
         conn.commit()
         return {"success": True, "message": "Student credentials modified successfully."}
-        @app.get("/version")
+@app.get("/version")
 def version():
     return {
         "message": "NEW BACKEND",
