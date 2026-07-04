@@ -86,3 +86,11 @@ def get_rooms(db: Session = Depends(get_db)):
     halls = db.query(ExamHall).all()
     # Return them in a format the frontend can easily read
     return halls
+@router.get("/{room_id}")
+def get_room(room_id: int, db: Session = Depends(get_db)):
+    room = db.query(ExamHall).filter(ExamHall.hall_id == room_id).first()
+
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    return room
