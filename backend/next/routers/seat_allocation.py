@@ -317,65 +317,67 @@ def generate_allocation(data: AllocationRequest):
 
                     all_seats.extend(room_seats)
 
-            allocations = allocate_students(
+                        allocations = allocate_students(
                 students,
                 all_seats
             )
+
             # -----------------------------
-# Save allocations to database
-# -----------------------------
+            # Delete previous allocation for this exam
+            # -----------------------------
+            cursor.execute(
+                """
+                DELETE FROM seat_allocations
+                WHERE exam_date=%s
+                AND exam_time=%s;
+                """,
+                (
+                    data.exam_date,
+                    data.exam_time,
+                )
+            )
 
-# Delete old allocation for this exam/date/time
-cursor.execute(
-    """
-    DELETE FROM seat_allocations
-    WHERE exam_date=%s
-      AND exam_time=%s;
-    """,
-    (
-        data.exam_date,
-        data.exam_time,
-    )
-)
+            # -----------------------------
+            # Save new allocations
+            # -----------------------------
+            for allocation in allocations:
 
-# Save new allocation
-for allocation in allocations:
+                cursor.execute(
+                    """
+                    INSERT INTO seat_allocations
+                    (
+                        exam_date,
+                        exam_time,
+                        student_id,
+                        batch_name,
+                        subject_code,
+                        subject_name,
+                        hall_id,
+                        room_no,
+                        bench_no,
+                        seat_no
+                    )
+                    VALUES
+                    (
+                        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                    );
+                    """,
+                    (
+                        data.exam_date,
+                        data.exam_time,
+                        allocation["student_id"],
+                        allocation["batch"],
+                        allocation["subject_code"],
+                        allocation["subject_name"],
+                        allocation["hall_id"],
+                        allocation["room_no"],
+                        allocation["bench_no"],
+                        allocation["seat_no"],
+                    )
+                )
 
-    cursor.execute(
-        """
-        INSERT INTO seat_allocations
-        (
-            exam_date,
-            exam_time,
-            student_id,
-            batch_name,
-            subject_code,
-            subject_name,
-            hall_id,
-            room_no,
-            bench_no,
-            seat_no
-        )
-        VALUES
-        (
-            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
-        );
-        """,
-        (
-            data.exam_date,
-            data.exam_time,
-            allocation["student_id"],
-            allocation["batch"],
-            allocation["subject_code"],
-            allocation["subject_name"],
-            allocation["hall_id"],
-            allocation["room_no"],
-            allocation["bench_no"],
-            allocation["seat_no"],
-        )
-    )
+            conn.commit()
 
-conn.commit()
             remaining_students = students[len(allocations):]
 
             return {
