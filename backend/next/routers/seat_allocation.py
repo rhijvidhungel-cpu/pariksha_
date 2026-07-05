@@ -325,6 +325,20 @@ def generate_allocation(data: AllocationRequest):
 # Save allocations to database
 # -----------------------------
 
+# Delete old allocation for this exam/date/time
+cursor.execute(
+    """
+    DELETE FROM seat_allocations
+    WHERE exam_date=%s
+      AND exam_time=%s;
+    """,
+    (
+        data.exam_date,
+        data.exam_time,
+    )
+)
+
+# Save new allocation
 for allocation in allocations:
 
     cursor.execute(
@@ -362,7 +376,6 @@ for allocation in allocations:
     )
 
 conn.commit()
-
             remaining_students = students[len(allocations):]
 
             return {
