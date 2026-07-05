@@ -359,7 +359,7 @@ def generate_allocation(data: AllocationRequest):
                     )
                     VALUES
                     (
-                        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
                     );
                     """,
                     (
