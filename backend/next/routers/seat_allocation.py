@@ -21,6 +21,34 @@ def generate_room_seats(room):
                 })
 
     return seats
+from collections import defaultdict
+
+
+def reorder_students(students):
+
+    groups = defaultdict(list)
+
+    for student in students:
+        groups[student["subject_code"]].append(student)
+
+    ordered = []
+
+    while True:
+
+        added = False
+
+        for subject in list(groups.keys()):
+
+            if groups[subject]:
+
+                ordered.append(groups[subject].pop(0))
+
+                added = True
+
+        if not added:
+            break
+
+    return ordered
 def allocate_students(students, seats):
 
     allocations = []
@@ -240,7 +268,7 @@ def generate_allocation(data: AllocationRequest):
                     })
 
             # ---------- Load selected rooms ----------
-
+            students = reorder_students(students)
             rooms = []
             all_seats = []
             total_capacity = 0
