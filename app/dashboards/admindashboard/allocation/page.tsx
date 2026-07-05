@@ -130,25 +130,41 @@ export default function SeatAllocationPage() {
       .reduce((sum, r) => sum + r.capacity, 0);
   }, [selectedRooms, rooms]);
 
-  async function generateAllocation() {
-    if (selectedBatches.length === 0) {
-      alert("Select at least one batch.");
-      return;
+async function generateAllocation() {
+  if (selectedBatches.length === 0 || selectedRooms.length === 0) {
+    alert("Select at least one batch and one room.");
+    return;
+  }
+
+  setGenerating(true);
+
+  try {
+    const res = await fetch(`${API}/api/seat-allocation/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        exam_date: selectedSession.split("|")[0],
+        exam_time: selectedSession.split("|")[1],
+        batches: selectedBatches,
+        rooms: selectedRooms,
+      }),
+    });
+
+    const data = await res.json();
+    
+    if (res.ok) {
+      alert(`Allocation successful! Status: ${data.status}`);
+      // Handle success (e.g., redirect or show results)
+    } else {
+      alert("Error: " + data.detail);
     }
-
-    if (selectedRooms.length === 0) {
-      alert("Select at least one room.");
-      return;
-    }
-
-    setGenerating(true);
-
-    alert(
-      "Seat allocation algorithm will be connected in the next step."
-    );
-
+  } catch (err) {
+    console.error(err);
+    alert("Failed to connect to the server.");
+  } finally {
     setGenerating(false);
   }
+}
 
   return (
     <div className="min-h-screen bg-slate-100 p-8">
