@@ -86,13 +86,8 @@ export default function AdminRoutinePage() {
         <div className="bg-white rounded-2xl border border-gray-300 shadow-md px-8 py-6">
 
           <h1 className="text-3xl font-extrabold text-[#1f2940] uppercase">
-            Routine Document Repository Manager
+            Upload Examination Routine
           </h1>
-
-          <p className="text-gray-500 mt-2 text-lg">
-            Upload examination routine Excel sheets. Uploaded files populate
-            directly into the examination routine database.
-          </p>
 
         </div>
 
@@ -111,7 +106,7 @@ export default function AdminRoutinePage() {
             <select
               value={batch}
               onChange={(e) => setBatch(e.target.value)}
-              className="w-full border rounded-xl px-4 py-4 text-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border rounded-xl px-4 py-4 text-lg focus:ring-2 focus:ring-blue-500 outline-none text-black font-semibold"
             >
               {batches.map((b) => (
                 <option key={b} value={b}>
