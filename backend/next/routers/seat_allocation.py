@@ -322,21 +322,28 @@ def generate_allocation(data: AllocationRequest):
                 students,
                 all_seats
             )
-                return {
+remaining_students = students[len(allocations):]
 
-                   "total_students": len(students),
+return {
+
+    "status": (
+        "COMPLETE"
+        if len(remaining_students) == 0
+        else "ROOM_FULL"
+    ),
 
                     "allocated": len(allocations),
 
-                    "total_capacity": total_capacity,
+                    "remaining": len(remaining_students),
+
+                    "remaining_students": remaining_students,
+
+                    "allocations": allocations,
 
                     "generated_seats": len(all_seats),
 
-                    "students_order": students,
-
-                    "allocations": allocations
-
-                        }
+                    "total_capacity": total_capacity
+          }
 
     except Exception as e:
 
