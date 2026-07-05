@@ -321,6 +321,47 @@ def generate_allocation(data: AllocationRequest):
                 students,
                 all_seats
             )
+            # -----------------------------
+# Save allocations to database
+# -----------------------------
+
+for allocation in allocations:
+
+    cursor.execute(
+        """
+        INSERT INTO seat_allocations
+        (
+            exam_date,
+            exam_time,
+            student_id,
+            batch_name,
+            subject_code,
+            subject_name,
+            hall_id,
+            room_no,
+            bench_no,
+            seat_no
+        )
+        VALUES
+        (
+            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+        );
+        """,
+        (
+            data.exam_date,
+            data.exam_time,
+            allocation["student_id"],
+            allocation["batch"],
+            allocation["subject_code"],
+            allocation["subject_name"],
+            allocation["hall_id"],
+            allocation["room_no"],
+            allocation["bench_no"],
+            allocation["seat_no"],
+        )
+    )
+
+conn.commit()
 
             remaining_students = students[len(allocations):]
 
