@@ -315,6 +315,8 @@ def generate_allocation(data: AllocationRequest):
 
                     "generated_seats": len(all_seats),
 
+                    "students_order": students,
+
                     "allocations": allocations
 
                         }
