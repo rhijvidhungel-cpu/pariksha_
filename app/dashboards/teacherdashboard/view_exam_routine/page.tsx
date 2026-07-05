@@ -54,25 +54,25 @@ export default function ViewExamRoutine() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 py-10 px-6">
+    <div className="min-h-screen bg-slate-100 py-10 px-6 text-slate-800">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-800">
+            <h1 className="text-3xl font-bold text-slate-900">
               View Exam Routine
             </h1>
-            <p className="text-slate-500 mt-1">
+            <p className="text-slate-600 mt-1">
               View uploaded examination schedules.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div>
-              <label className="block font-semibold mb-2">Select Batch</label>
+              <label className="block font-semibold mb-2 text-slate-800">Select Batch</label>
               <select
                 value={selectedBatch}
                 onChange={(e) => setSelectedBatch(e.target.value)}
-                className="w-full border rounded-lg p-3"
+                className="w-full border border-slate-300 rounded-lg p-3 text-slate-800"
               >
                 {batches.map((batch) => (
                   <option key={batch} value={batch}>
@@ -84,17 +84,17 @@ export default function ViewExamRoutine() {
           </div>
 
           {loading ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 text-slate-800">
               <div className="text-lg font-semibold">Loading routine...</div>
             </div>
           ) : routine.length === 0 ? (
-            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-8 text-center">
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-8 text-center text-slate-800">
               <h2 className="text-xl font-semibold mb-2">No Routine Found</h2>
               <p>No exam routine has been uploaded for this batch.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300">
+              <table className="w-full border border-gray-300 text-slate-800">
                 <thead>
                   <tr className="bg-blue-700 text-white">
                     <th className="border p-3">Date</th>
@@ -118,8 +118,8 @@ export default function ViewExamRoutine() {
           )}
 
           <div className="mt-10 flex justify-between items-center print:hidden">
-            <div className="text-gray-500 text-sm">
-              Showing routine for <span className="font-semibold">{selectedBatch}</span>
+            <div className="text-slate-600 text-sm">
+              Showing routine for <span className="font-semibold text-slate-800">{selectedBatch}</span>
             </div>
             <button
               onClick={printRoutine}
