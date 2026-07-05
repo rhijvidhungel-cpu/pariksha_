@@ -77,7 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={() => router.push("/dashboards/admindashboard/exam_routine")} className={getNavClass("/dashboards/admindashboard/exam_routine")}>
               <span className="text-base">📅</span> <span>Upload Exam Routine</span>
             </button>
-            <button onClick={() => router.push("/dashboards/admindashboard/seat-allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
+            <button onClick={() => router.push("/dashboards/admindashboard/allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
               <span className="text-base">🔀</span> <span>Seat Allocation Engine</span>
             </button>
           </nav>
