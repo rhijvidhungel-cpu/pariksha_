@@ -83,15 +83,13 @@ def allocate_students(students, seats):
 
     allocations = []
 
-    seat_index = 0
+    remaining_students = students.copy()
 
-    for student in students:
+    for seat in seats:
 
         allocated = False
 
-        while seat_index < len(seats):
-
-            seat = seats[seat_index]
+        for student in remaining_students[:]:
 
             if is_valid_seat(student, seat, allocations):
 
@@ -119,16 +117,11 @@ def allocate_students(students, seats):
 
                 })
 
+                remaining_students.remove(student)
+
                 allocated = True
 
-                seat_index += 1
-
                 break
-
-            seat_index += 1
-
-        if not allocated:
-            break
 
     return allocations
 
