@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
 from database import get_raw_db
+from collections import defaultdict
+
 def generate_room_seats(room):
 
     seats = []
@@ -21,7 +23,6 @@ def generate_room_seats(room):
                 })
 
     return seats
-from collections import defaultdict
 
 
 def reorder_students(students):
@@ -49,6 +50,8 @@ def reorder_students(students):
             break
 
     return ordered
+
+
 def is_valid_seat(student, seat, allocations):
 
     for allocated in allocations:
@@ -74,6 +77,7 @@ def is_valid_seat(student, seat, allocations):
             return False
 
     return True
+
 
 def allocate_students(students, seats):
 
@@ -127,6 +131,7 @@ def allocate_students(students, seats):
             break
 
     return allocations
+
 
 router = APIRouter(
     prefix="/api/seat-allocation",
@@ -213,8 +218,8 @@ def preview_allocation(data: AllocationRequest):
             status_code=500,
             detail=str(e),
         )
-@router.post("/generate")
 
+@router.post("/generate")
 def generate_allocation(data: AllocationRequest):
 
     try:
@@ -318,32 +323,35 @@ def generate_allocation(data: AllocationRequest):
                     room_seats = generate_room_seats(room)
 
                     all_seats.extend(room_seats)
-                allocations = allocate_students(
+
+            allocations = allocate_students(
                 students,
                 all_seats
             )
-remaining_students = students[len(allocations):]
 
-return {
+            remaining_students = students[len(allocations):]
 
-    "status": (
-        "COMPLETE"
-        if len(remaining_students) == 0
-        else "ROOM_FULL"
-    ),
+            return {
 
-                    "allocated": len(allocations),
+                "status": (
+                    "COMPLETE"
+                    if len(remaining_students) == 0
+                    else "ROOM_FULL"
+                ),
 
-                    "remaining": len(remaining_students),
+                "allocated": len(allocations),
 
-                    "remaining_students": remaining_students,
+                "remaining": len(remaining_students),
 
-                    "allocations": allocations,
+                "remaining_students": remaining_students,
 
-                    "generated_seats": len(all_seats),
+                "allocations": allocations,
 
-                    "total_capacity": total_capacity
-          }
+                "generated_seats": len(all_seats),
+
+                "total_capacity": total_capacity
+
+            }
 
     except Exception as e:
 
