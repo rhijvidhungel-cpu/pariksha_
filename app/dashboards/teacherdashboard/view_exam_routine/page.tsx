@@ -1,57 +1,133 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
+interface Routine {
+  Date: string;
+  Time: string;
+  Subject: string;
+  Code: string;
+}
+
 export default function TeacherRoutinePage() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const batch = "CE-2024";
+  const API = "https://pariksha-9qjs.onrender.com";
 
+  const [batches, setBatches] = useState<string[]>([]);
+  const [batch, setBatch] = useState("");
+  const [routine, setRoutine] = useState<Routine[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load all batches
   useEffect(() => {
-    setLoading(true);
-    fetch(`https://pariksha-9qjs.onrender.com/api/routines?batch=${batch}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network response was not ok");
-        return res.json();
-      })
-      .then((res) => {
-        setData(Array.isArray(res) ? res : []);
-      })
-      .catch((err) => {
-        console.error("Error fetching:", err);
-        setData([]);
-      })
-      .finally(() => setLoading(false)); // Stop loading regardless of result
-  }, [batch]); // Added batch as dependency
+    fetch(`${API}/api/batches`)
+      .then((res) => res.json())
+      .then((data) => {
+        setBatches(data);
 
-  if (loading) return <div className="p-8">Loading routine...</div>;
+        if (data.length > 0) {
+          setBatch(data[0]);
+        }
+      });
+  }, []);
+
+  // Load routine whenever batch changes
+  useEffect(() => {
+    if (!batch) return;
+
+    setLoading(true);
+
+    fetch(`${API}/api/routines?batch=${batch}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRoutine(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        setRoutine([]);
+      })
+      .finally(() => setLoading(false));
+  }, [batch]);
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Exam Schedule</h1>
-      <table className="w-full border-collapse border border-gray-200">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Date</th>
-            <th className="border p-2">Subject</th>
-            <th className="border p-2">Code</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length > 0 ? (
-            data.map((r, i) => (
-              <tr key={i} className="text-center border-t">
-                <td className="border p-2">{r.Date}</td>
-                <td className="border p-2">{r.Subject}</td>
-                <td className="border p-2">{r.Code}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={3} className="p-4 text-center">No data found for {batch}</td>
+
+      <h1 className="text-3xl font-bold mb-6">
+        View Exam Routine
+      </h1>
+
+      <div className="mb-6">
+
+        <label className="font-semibold mr-4">
+          Select Batch
+        </label>
+
+        <select
+          value={batch}
+          onChange={(e) => setBatch(e.target.value)}
+          className="border p-2 rounded"
+        >
+          {batches.map((b) => (
+            <option key={b}>{b}</option>
+          ))}
+        </select>
+
+      </div>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : routine.length === 0 ? (
+        <div>No routine available.</div>
+      ) : (
+
+        <table className="w-full border-collapse">
+
+          <thead>
+
+            <tr className="bg-gray-100">
+
+              <th className="border p-3">Date</th>
+
+              <th className="border p-3">Time</th>
+
+              <th className="border p-3">Subject</th>
+
+              <th className="border p-3">Subject Code</th>
+
             </tr>
-          )}
-        </tbody>
-      </table>
+
+          </thead>
+
+          <tbody>
+
+            {routine.map((item, index) => (
+
+              <tr key={index}>
+
+                <td className="border p-3">
+                  {item.Date}
+                </td>
+
+                <td className="border p-3">
+                  {item.Time || "-"}
+                </td>
+
+                <td className="border p-3">
+                  {item.Subject}
+                </td>
+
+                <td className="border p-3">
+                  {item.Code}
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      )}
+
     </div>
   );
 }
