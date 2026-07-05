@@ -317,11 +317,10 @@ def generate_allocation(data: AllocationRequest):
 
                     all_seats.extend(room_seats)
 
-                        allocations = allocate_students(
+            allocations = allocate_students(
                 students,
                 all_seats
             )
-
             # -----------------------------
             # Delete previous allocation for this exam
             # -----------------------------
