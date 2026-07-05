@@ -354,6 +354,7 @@ def generate_allocation(data: AllocationRequest):
                         hall_id,
                         room_no,
                         bench_no,
+                        row_no,
                         seat_no
                     )
                     VALUES
