@@ -30,25 +30,25 @@ export default function HallView() {
   if (!roomId) return <div>Invalid Room ID</div>;
   if (!hall) return <div>Loading...</div>;
 
-  return (
-  <div style={{ padding: "20px" }}>
-    <h2 style={{ fontWeight: "bold", marginBottom: "20px" }}>
+return (
+  <div style={{ padding: "30px", color: "black" }}>
+    <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "20px" }}>
       Room: {hall.room_no}
     </h2>
 
-    {/* ROWS */}
+    {/* GRID */}
     {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
       <div
         key={rowIndex}
         style={{
           display: "flex",
           alignItems: "center",
-          marginBottom: "20px",
-          gap: "15px",
+          gap: "20px",
+          marginBottom: "25px",
         }}
       >
-        {/* Row label */}
-        <div style={{ width: "60px", fontWeight: "bold" }}>
+        {/* Row Label */}
+        <div style={{ width: "80px", fontWeight: "700", fontSize: "14px" }}>
           Row {rowIndex + 1}
         </div>
 
@@ -58,11 +58,11 @@ export default function HallView() {
             key={benchIndex}
             style={{
               display: "flex",
-              border: "2px solid #333",
-              padding: "10px",
-              borderRadius: "8px",
-              gap: "5px",
-              background: "#f9f9f9",
+              border: "2px solid black",
+              padding: "18px",
+              borderRadius: "10px",
+              backgroundColor: "#fff",
+              minWidth: "120px",
             }}
           >
             {/* Seats */}
@@ -70,18 +70,20 @@ export default function HallView() {
               <div
                 key={seatIndex}
                 style={{
-                  width: "30px",
-                  height: "30px",
-                  backgroundColor: "#ddd",
-                  border: "1px solid #999",
+                  width: "45px",
+                  height: "45px",
+                  border: "2px solid black",
+                  margin: "0 5px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "10px",
-                  fontWeight: "bold",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  color: "black",
+                  backgroundColor: "#f5f5f5",
                 }}
               >
-                S
+                S{seatIndex + 1}
               </div>
             ))}
           </div>
