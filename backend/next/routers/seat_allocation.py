@@ -49,29 +49,47 @@ def reorder_students(students):
             break
 
     return ordered
+def is_valid_seat(student, seat, allocations):
+
+    for allocated in allocations:
+
+        # Same room only
+        if allocated["hall_id"] != seat["hall_id"]:
+            continue
+
+        # Rule 1: Same bench
+        if (
+            allocated["row_no"] == seat["row_no"]
+            and allocated["bench_no"] == seat["bench_no"]
+            and allocated["subject_code"] == student["subject_code"]
+        ):
+            return False
+
+        # Rule 2: Front / Back
+        if (
+            allocated["bench_no"] == seat["bench_no"]
+            and abs(allocated["row_no"] - seat["row_no"]) == 1
+            and allocated["subject_code"] == student["subject_code"]
+        ):
+            return False
+
+    return True
+
 def allocate_students(students, seats):
 
     allocations = []
-
-    bench_subjects = {}
 
     seat_index = 0
 
     for student in students:
 
+        allocated = False
+
         while seat_index < len(seats):
 
             seat = seats[seat_index]
 
-            key = (
-                seat["hall_id"],
-                seat["row_no"],
-                seat["bench_no"]
-            )
-
-            used_subjects = bench_subjects.get(key, set())
-
-            if student["subject_code"] not in used_subjects:
+            if is_valid_seat(student, seat, allocations):
 
                 allocations.append({
 
@@ -97,17 +115,16 @@ def allocate_students(students, seats):
 
                 })
 
-                used_subjects.add(student["subject_code"])
-
-                bench_subjects[key] = used_subjects
+                allocated = True
 
                 seat_index += 1
 
                 break
 
-            else:
+            seat_index += 1
 
-                seat_index += 1
+        if not allocated:
+            break
 
     return allocations
 
