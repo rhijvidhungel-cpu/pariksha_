@@ -12,7 +12,7 @@ from routers.allocation import router as allocation_router
 from routers import batches
 from routers.exam_routine import router as exam_routine_router
 import loginapi
-from routers.allocation_engine import router as allocation_engine_router
+from routers import seat_allocation
 
 # Import local db pool mapping initialization file
 from database import get_raw_db
@@ -41,7 +41,7 @@ app.include_router(loginapi.router)
 app.include_router(exam_routine_router)
 app.include_router(allocation_router, prefix="/rooms")
 app.include_router(batches.router)
-app.include_router(allocation_engine_router)
+app.include_router(seat_allocation.router)
 
 @app.get("/api/students")
 def get_students():
