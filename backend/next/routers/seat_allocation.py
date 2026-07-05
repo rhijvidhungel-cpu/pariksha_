@@ -2,6 +2,25 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
 from database import get_raw_db
+def generate_room_seats(room):
+
+    seats = []
+
+    for row in range(1, room["rows_count"] + 1):
+
+        for bench in range(1, room["benches_per_row"] + 1):
+
+            for seat in range(1, room["seats_per_bench"] + 1):
+
+                seats.append({
+                    "hall_id": room["hall_id"],
+                    "room_no": room["room_no"],
+                    "row_no": row,
+                    "bench_no": bench,
+                    "seat_no": seat
+                })
+
+    return seats
 
 router = APIRouter(
     prefix="/api/seat-allocation",
@@ -160,46 +179,56 @@ def generate_allocation(data: AllocationRequest):
 
             # ---------- Load selected rooms ----------
 
-            rooms = []
+# ---------- Load selected rooms ----------
 
-            total_capacity = 0
+rooms = []
+all_seats = []
+total_capacity = 0
 
-            for hall_id in data.rooms:
+for hall_id in data.rooms:
 
-                cursor.execute(
-                    """
-                    SELECT
-                        hall_id,
-                        room_no,
-                        capacity,
-                        rows_count,
-                        benches_per_row,
-                        seats_per_bench
-                    FROM exam_halls
-                    WHERE hall_id=%s;
-                    """,
-                    (hall_id,)
-                )
+    cursor.execute(
+        """
+        SELECT
+            hall_id,
+            room_no,
+            capacity,
+            rows_count,
+            benches_per_row,
+            seats_per_bench
+        FROM exam_halls
+        WHERE hall_id=%s;
+        """,
+        (hall_id,)
+    )
 
-                room = cursor.fetchone()
+    room = cursor.fetchone()
 
-                if room:
+    if room:
 
-                    rooms.append(room)
+        rooms.append(room)
 
-                    total_capacity += room["capacity"]
+        total_capacity += room["capacity"]
 
-            return {
+        room_seats = generate_room_seats(room)
 
-                "total_students": len(students),
+        all_seats.extend(room_seats)
 
-                "total_capacity": total_capacity,
+return {
 
-                "students": students,
+    "total_students": len(students),
 
-                "rooms": rooms
+    "total_capacity": total_capacity,
 
-            }
+    "generated_seats": len(all_seats),
+
+    "students": students,
+
+    "rooms": rooms,
+
+    "sample_seats": all_seats[:10]
+
+}
 
     except Exception as e:
 
