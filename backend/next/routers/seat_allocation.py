@@ -372,6 +372,7 @@ def generate_allocation(data: AllocationRequest):
                         allocation["hall_id"],
                         allocation["room_no"],
                         allocation["bench_no"],
+                        allocation["row_no"],
                         allocation["seat_no"],
                     )
                 )
