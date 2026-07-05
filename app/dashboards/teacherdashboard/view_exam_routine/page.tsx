@@ -22,7 +22,6 @@ export default function ViewExamRoutine() {
       .then((res) => res.json())
       .then((data) => {
         setBatches(data);
-
         if (data.length > 0) {
           setSelectedBatch(data[0]);
         }
@@ -31,20 +30,16 @@ export default function ViewExamRoutine() {
 
   useEffect(() => {
     if (!selectedBatch) return;
-
     loadRoutine(selectedBatch);
   }, [selectedBatch]);
 
   const loadRoutine = async (batch: string) => {
     setLoading(true);
-
     try {
       const res = await fetch(
         `${API}/api/routines?batch=${encodeURIComponent(batch)}`
       );
-
       const data = await res.json();
-
       setRoutine(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
@@ -62,28 +57,18 @@ export default function ViewExamRoutine() {
     <div className="min-h-screen bg-slate-100 py-10 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">
-                View Exam Routine
-              </h1>
-              <p className="text-slate-500 mt-1">
-                View uploaded examination schedules.
-              </p>
-            </div>
-            <button
-              onClick={printRoutine}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition print:hidden"
-            >
-              Print
-            </button>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-800">
+              View Exam Routine
+            </h1>
+            <p className="text-slate-500 mt-1">
+              View uploaded examination schedules.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div>
-              <label className="block font-semibold mb-2">
-                Select Batch
-              </label>
+              <label className="block font-semibold mb-2">Select Batch</label>
               <select
                 value={selectedBatch}
                 onChange={(e) => setSelectedBatch(e.target.value)}
@@ -120,18 +105,11 @@ export default function ViewExamRoutine() {
                 </thead>
                 <tbody>
                   {routine.map((item, index) => (
-                    <tr
-                      key={index}
-                      className="hover:bg-blue-50 transition"
-                    >
+                    <tr key={index} className="hover:bg-blue-50 transition">
                       <td className="border p-3">{item.Date}</td>
-                      <td className="border p-3 text-center">
-                        {item.Time || "-"}
-                      </td>
+                      <td className="border p-3 text-center">{item.Time || "-"}</td>
                       <td className="border p-3">{item.Subject}</td>
-                      <td className="border p-3 text-center font-medium">
-                        {item.Code}
-                      </td>
+                      <td className="border p-3 text-center font-medium">{item.Code}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -157,6 +135,10 @@ export default function ViewExamRoutine() {
         @media print {
           body {
             background: white;
+            color: black !important;
+          }
+          * {
+            color: black !important;
           }
           .print\\:hidden {
             display: none !important;
@@ -166,17 +148,15 @@ export default function ViewExamRoutine() {
             border-collapse: collapse;
           }
           th, td {
-            border: 1px solid black;
+            border: 1px solid black !important;
             padding: 8px;
+          }
+          thead tr {
+            background-color: transparent !important;
+            color: black !important;
           }
           .shadow-xl {
             box-shadow: none !important;
-          }
-          .rounded-2xl {
-            border-radius: 0 !important;
-          }
-          .bg-slate-100 {
-            background: white !important;
           }
         }
       `}</style>
