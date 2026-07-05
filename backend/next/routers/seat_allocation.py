@@ -21,6 +21,67 @@ def generate_room_seats(room):
                 })
 
     return seats
+def allocate_students(students, seats):
+
+    allocations = []
+
+    bench_subjects = {}
+
+    seat_index = 0
+
+    for student in students:
+
+        while seat_index < len(seats):
+
+            seat = seats[seat_index]
+
+            key = (
+                seat["hall_id"],
+                seat["row_no"],
+                seat["bench_no"]
+            )
+
+            used_subjects = bench_subjects.get(key, set())
+
+            if student["subject_code"] not in used_subjects:
+
+                allocations.append({
+
+                    "student_id": student["student_id"],
+
+                    "full_name": student["full_name"],
+
+                    "batch": student["batch"],
+
+                    "subject_name": student["subject_name"],
+
+                    "subject_code": student["subject_code"],
+
+                    "hall_id": seat["hall_id"],
+
+                    "room_no": seat["room_no"],
+
+                    "row_no": seat["row_no"],
+
+                    "bench_no": seat["bench_no"],
+
+                    "seat_no": seat["seat_no"]
+
+                })
+
+                used_subjects.add(student["subject_code"])
+
+                bench_subjects[key] = used_subjects
+
+                seat_index += 1
+
+                break
+
+            else:
+
+                seat_index += 1
+
+    return allocations
 
 router = APIRouter(
     prefix="/api/seat-allocation",
@@ -108,6 +169,7 @@ def preview_allocation(data: AllocationRequest):
             detail=str(e),
         )
 @router.post("/generate")
+
 def generate_allocation(data: AllocationRequest):
 
     try:
@@ -211,22 +273,23 @@ def generate_allocation(data: AllocationRequest):
                     room_seats = generate_room_seats(room)
 
                     all_seats.extend(room_seats)
+                allocations = allocate_students(
+                students,
+                all_seats
+            )
+                return {
 
-            return {
+                   "total_students": len(students),
 
-                "total_students": len(students),
+                    "allocated": len(allocations),
 
-                "total_capacity": total_capacity,
+                    "total_capacity": total_capacity,
 
-                "generated_seats": len(all_seats),
+                    "generated_seats": len(all_seats),
 
-                "students": students,
+                    "allocations": allocations
 
-                "rooms": rooms,
-
-                "sample_seats": all_seats[:10]
-
-            }
+                        }
 
     except Exception as e:
 
