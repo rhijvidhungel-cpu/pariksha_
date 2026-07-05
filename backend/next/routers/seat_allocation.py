@@ -179,56 +179,54 @@ def generate_allocation(data: AllocationRequest):
 
             # ---------- Load selected rooms ----------
 
-# ---------- Load selected rooms ----------
+            rooms = []
+            all_seats = []
+            total_capacity = 0
 
-rooms = []
-all_seats = []
-total_capacity = 0
+            for hall_id in data.rooms:
 
-for hall_id in data.rooms:
+                cursor.execute(
+                    """
+                    SELECT
+                        hall_id,
+                        room_no,
+                        capacity,
+                        rows_count,
+                        benches_per_row,
+                        seats_per_bench
+                    FROM exam_halls
+                    WHERE hall_id=%s;
+                    """,
+                    (hall_id,)
+                )
 
-    cursor.execute(
-        """
-        SELECT
-            hall_id,
-            room_no,
-            capacity,
-            rows_count,
-            benches_per_row,
-            seats_per_bench
-        FROM exam_halls
-        WHERE hall_id=%s;
-        """,
-        (hall_id,)
-    )
+                room = cursor.fetchone()
 
-    room = cursor.fetchone()
+                if room:
 
-    if room:
+                    rooms.append(room)
 
-        rooms.append(room)
+                    total_capacity += room["capacity"]
 
-        total_capacity += room["capacity"]
+                    room_seats = generate_room_seats(room)
 
-        room_seats = generate_room_seats(room)
+                    all_seats.extend(room_seats)
 
-        all_seats.extend(room_seats)
+            return {
 
-return {
+                "total_students": len(students),
 
-    "total_students": len(students),
+                "total_capacity": total_capacity,
 
-    "total_capacity": total_capacity,
+                "generated_seats": len(all_seats),
 
-    "generated_seats": len(all_seats),
+                "students": students,
 
-    "students": students,
+                "rooms": rooms,
 
-    "rooms": rooms,
+                "sample_seats": all_seats[:10]
 
-    "sample_seats": all_seats[:10]
-
-}
+            }
 
     except Exception as e:
 
