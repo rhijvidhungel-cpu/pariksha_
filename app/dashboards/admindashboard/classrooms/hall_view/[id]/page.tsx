@@ -110,9 +110,10 @@ return (
                   >
                     {allocation ? (
                       <>
-                        <div>ID: {allocation.student_id}</div>
-                        <div>{allocation.batch_name}</div>
-                        <div>S{allocation.seat_no}</div>
+                      <div><b>ID:</b> {allocation.student_id}</div>
+                      <div><b>Batch:</b> {allocation.batch_name}</div>
+                      <div><b>Sub:</b> {allocation.subject_code}</div>
+                       <div><b>Seat:</b> S{allocation.seat_no}</div>
                       </>
                     ) : (
                       <>S{seatIndex + 1}</>
