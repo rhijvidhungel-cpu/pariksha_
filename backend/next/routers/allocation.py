@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
 from schemas import ExamHallCreate
+from sqlalchemy import func
+from models import SeatAllocation
 print("ExamHall imported from:", ExamHall.__module__)
 print("ExamHall columns:", ExamHall.__table__.columns.keys())
 router = APIRouter(tags=["Allocation"])
@@ -83,10 +85,32 @@ def auto_allocate(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 @router.get("/")
 def get_rooms(db: Session = Depends(get_db)):
-    # Fetch all exam halls from the database
-    halls = db.query(ExamHall).all()
-    # Return them in a format the frontend can easily read
-    return halls
+    rooms = (
+        db.query(
+            ExamHall,
+            func.count(SeatAllocation.student_id).label("allocatedStudentsCount")
+        )
+        .outerjoin(
+            SeatAllocation,
+            ExamHall.hall_id == SeatAllocation.hall_id
+        )
+        .group_by(ExamHall.hall_id)
+        .all()
+    )
+
+    return [
+        {
+            "hall_id": hall.hall_id,
+            "room_no": hall.room_no,
+            "rows_count": hall.rows_count,
+            "benches_per_row": hall.benches_per_row,
+            "seats_per_bench": hall.seats_per_bench,
+            "capacity": hall.capacity,
+            "allocatedStudentsCount": allocated,
+            "status": "Full" if allocated >= hall.capacity else "Available",
+        }
+        for hall, allocated in rooms
+    ]
 @router.get("/{room_id}")
 def get_room(room_id: int, db: Session = Depends(get_db)):
 
