@@ -53,17 +53,6 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
-
-      {/* EXECUTION INFO */}
-      <div style={styles.guideBanner}>
-        <span style={styles.guideIcon}>💡</span>
-        <div>
-          <h4 style={styles.guideTitle}>Execution Guide Info</h4>
-          <p style={styles.guideText}>
-            To perform structural mappings, configure rosters inside Directory views, upload structural PDF routes, or utilize the automated Randomized Seating Allocation wizard module link.
-          </p>
-        </div>
-      </div>
     </>
   );
 }
