@@ -42,7 +42,7 @@ export default function SeatAllocationPage() {
 
   async function loadSessions() {
   try {
-    const res = await fetch(`${API}/api/exam-routine/sessions`);
+    const res = await fetch(`${API}/api/routines/sessions`);
     const data = await res.json();
 
     setSessions(Array.isArray(data) ? data : []);

@@ -41,7 +41,7 @@ app.include_router(loginapi.router)
 app.include_router(exam_routine_router)
 app.include_router(allocation_router, prefix="/rooms")
 app.include_router(batches.router)
-app.include_router(seat_allocation.router, prefix="/api/seat-allocation")
+app.include_router(seat_allocation.router)
 
 @app.get("/api/students")
 def get_students():
