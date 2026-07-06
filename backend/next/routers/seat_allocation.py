@@ -148,40 +148,39 @@ def preview_allocation(data: AllocationRequest):
             cursor = conn.cursor()
 
             result = []
-
             total_students = 0
 
-            for batch in data.batches:
+            # Get all batches having exam in the selected session
+            cursor.execute(
+                """
+                SELECT
+                    batch_name,
+                    subject_name,
+                    subject_code
+                FROM exam_routines
+                WHERE exam_date=%s
+                AND exam_time=%s
+                ORDER BY batch_name;
+                """,
+                (
+                    data.exam_date,
+                    data.exam_time,
+                ),
+            )
 
-                # Find exam subject
-                cursor.execute(
-                    """
-                    SELECT subject_name,
-                           subject_code
-                    FROM exam_routines
-                    WHERE batch_name=%s
-                    AND exam_date=%s
-                    AND exam_time=%s;
-                    """,
-                    (
-                        batch,
-                        data.exam_date,
-                        data.exam_time,
-                    ),
-                )
+            exam_batches = cursor.fetchall()
 
-                subject = cursor.fetchone()
+            for subject in exam_batches:
 
-                if not subject:
-                    continue
+                batch = subject["batch_name"]
 
-                # Count students
+                # Count students in this batch
                 cursor.execute(
                     """
                     SELECT COUNT(*) AS count
                     FROM students s
                     JOIN batches b
-                    ON s.batch_id=b.batch_id
+                    ON s.batch_id = b.batch_id
                     WHERE b.batch_name=%s;
                     """,
                     (batch,),
@@ -211,7 +210,6 @@ def preview_allocation(data: AllocationRequest):
             status_code=500,
             detail=str(e),
         )
-
 @router.post("/generate")
 def generate_allocation(data: AllocationRequest):
 
