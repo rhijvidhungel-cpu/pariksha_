@@ -178,7 +178,7 @@ async function generateAllocation() {
 }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
+    <div className="min-h-screen bg-slate-100 p-8 text-black">
 
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
 
