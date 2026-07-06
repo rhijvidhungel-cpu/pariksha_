@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       {/* OVERVIEW BANNER */}
       <div style={styles.overviewCard}>
         <p style={styles.overviewSubtitle}>
-          Real-time status registers for Kathmandu University exam sectors.
+          Admin Dashboard  
         </p>
       </div>
 
