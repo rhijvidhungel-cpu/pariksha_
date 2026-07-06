@@ -83,34 +83,38 @@ def auto_allocate(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-@router.get("/")
-def get_rooms(db: Session = Depends(get_db)):
-    rooms = (
-        db.query(
-            ExamHall,
-            func.count(SeatAllocation.student_id).label("allocatedStudentsCount")
-        )
-        .outerjoin(
-            SeatAllocation,
-            ExamHall.hall_id == SeatAllocation.hall_id
-        )
-        .group_by(ExamHall.hall_id)
-        .all()
-    )
+from sqlalchemy import text
 
-    return [
-        {
+@router.get("/")
+def get_rooms(db: Session =Depends(get_db)):
+
+    halls = db.query(ExamHall).all()
+
+    result = []
+
+    for hall in halls:
+
+        occupied = db.execute(
+            text("""
+                SELECT COUNT(*)
+                FROM seat_allocations
+                WHERE hall_id = :hall_id
+            """),
+            {"hall_id": hall.hall_id},
+        ).scalar()
+
+        result.append({
             "hall_id": hall.hall_id,
             "room_no": hall.room_no,
             "rows_count": hall.rows_count,
             "benches_per_row": hall.benches_per_row,
             "seats_per_bench": hall.seats_per_bench,
             "capacity": hall.capacity,
-            "allocatedStudentsCount": allocated,
-            "status": "Full" if allocated >= hall.capacity else "Available",
-        }
-        for hall, allocated in rooms
-    ]
+            "allocatedStudentsCount": occupied,
+            "status": "Full" if occupied >= hall.capacity else "Available"
+        })
+
+    return result
 @router.get("/{room_id}")
 def get_room(room_id: int, db: Session = Depends(get_db)):
 
