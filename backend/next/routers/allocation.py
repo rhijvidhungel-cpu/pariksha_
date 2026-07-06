@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
@@ -100,19 +101,19 @@ def get_room(room_id: int, db: Session = Depends(get_db)):
         )
 
     allocations = db.execute(
-        """
-        SELECT
-            student_id,
-            batch_name,
-            subject_code,
-            subject_name,
-            row_no,
-            bench_no,
-            seat_no
-        FROM seat_allocations
-        WHERE hall_id = :hall_id
-        ORDER BY row_no, bench_no, seat_no
-        """,
+        text("""
+            SELECT
+                student_id,
+                batch_name,
+                subject_code,
+                subject_name,
+                row_no,
+                bench_no,
+                seat_no
+            FROM seat_allocations
+            WHERE hall_id = :hall_id
+            ORDER BY row_no, bench_no, seat_no
+        """),
         {"hall_id": room_id}
     ).mappings().all()
 
