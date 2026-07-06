@@ -88,9 +88,39 @@ def get_rooms(db: Session = Depends(get_db)):
     return halls
 @router.get("/{room_id}")
 def get_room(room_id: int, db: Session = Depends(get_db)):
-    room = db.query(ExamHall).filter(ExamHall.hall_id == room_id).first()
+
+    room = db.query(ExamHall).filter(
+        ExamHall.hall_id == room_id
+    ).first()
 
     if room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Room not found"
+        )
 
-    return room
+    allocations = db.execute(
+        """
+        SELECT
+            student_id,
+            batch_name,
+            subject_code,
+            subject_name,
+            row_no,
+            bench_no,
+            seat_no
+        FROM seat_allocations
+        WHERE hall_id = :hall_id
+        ORDER BY row_no, bench_no, seat_no
+        """,
+        {"hall_id": room_id}
+    ).mappings().all()
+
+    return {
+        "hall_id": room.hall_id,
+        "room_no": room.room_no,
+        "rows_count": room.rows_count,
+        "benches_per_row": room.benches_per_row,
+        "seats_per_bench": room.seats_per_bench,
+        "allocations": allocations
+    }

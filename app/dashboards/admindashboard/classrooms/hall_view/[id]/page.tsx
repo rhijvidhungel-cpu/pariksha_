@@ -29,14 +29,27 @@ export default function HallView() {
 
   if (!roomId) return <div>Invalid Room ID</div>;
   if (!hall) return <div>Loading...</div>;
+const seatMap = new Map<string, any>();
+
+hall.allocations?.forEach((a: any) => {
+  seatMap.set(
+    `${a.row_no}-${a.bench_no}-${a.seat_no}`,
+    a
+  );
+});
 
 return (
   <div style={{ padding: "30px", color: "black" }}>
-    <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "20px" }}>
+    <h2
+      style={{
+        fontSize: "22px",
+        fontWeight: "800",
+        marginBottom: "20px",
+      }}
+    >
       Room: {hall.room_no}
     </h2>
 
-    {/* GRID */}
     {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
       <div
         key={rowIndex}
@@ -47,12 +60,15 @@ return (
           marginBottom: "25px",
         }}
       >
-        {/* Row Label */}
-        <div style={{ width: "80px", fontWeight: "700", fontSize: "14px" }}>
+        <div
+          style={{
+            width: "80px",
+            fontWeight: "700",
+          }}
+        >
           Row {rowIndex + 1}
         </div>
 
-        {/* Benches */}
         {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
           <div
             key={benchIndex}
@@ -65,30 +81,50 @@ return (
               minWidth: "120px",
             }}
           >
-            {/* Seats */}
-            {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => (
-              <div
-                key={seatIndex}
-                style={{
-                  width: "45px",
-                  height: "45px",
-                  border: "2px solid black",
-                  margin: "0 5px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  color: "black",
-                  backgroundColor: "#f5f5f5",
-                }}
-              >
-                S{seatIndex + 1}
-              </div>
-            ))}
+            {Array.from({ length: hall.seats_per_bench }).map(
+              (_, seatIndex) => {
+                const allocation = seatMap.get(
+                  `${rowIndex + 1}-${benchIndex + 1}-${seatIndex + 1}`
+                );
+
+                return (
+                  <div
+                    key={seatIndex}
+                    style={{
+                      width: "110px",
+                      minHeight: "85px",
+                      border: "2px solid black",
+                      margin: "0 5px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "10px",
+                      fontWeight: "700",
+                      color: "black",
+                      backgroundColor: allocation
+                        ? "#d1fae5"
+                        : "#f5f5f5",
+                      padding: "4px",
+                    }}
+                  >
+                    {allocation ? (
+                      <>
+                        <div>ID: {allocation.student_id}</div>
+                        <div>{allocation.batch_name}</div>
+                        <div>S{allocation.seat_no}</div>
+                      </>
+                    ) : (
+                      <>S{seatIndex + 1}</>
+                    )}
+                  </div>
+                );
+              }
+            )}
           </div>
         ))}
       </div>
     ))}
   </div>
-);}
+);
+}
