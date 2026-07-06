@@ -7,8 +7,6 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, ExamHall
 from schemas import ExamHallCreate
-from sqlalchemy import func
-from models import SeatAllocation
 print("ExamHall imported from:", ExamHall.__module__)
 print("ExamHall columns:", ExamHall.__table__.columns.keys())
 router = APIRouter(tags=["Allocation"])
@@ -86,14 +84,12 @@ def auto_allocate(db: Session = Depends(get_db)):
 from sqlalchemy import text
 
 @router.get("/")
-def get_rooms(db: Session =Depends(get_db)):
-
+def get_rooms(db: Session = Depends(get_db)):
     halls = db.query(ExamHall).all()
 
     result = []
 
     for hall in halls:
-
         occupied = db.execute(
             text("""
                 SELECT COUNT(*)
@@ -111,7 +107,7 @@ def get_rooms(db: Session =Depends(get_db)):
             "seats_per_bench": hall.seats_per_bench,
             "capacity": hall.capacity,
             "allocatedStudentsCount": occupied,
-            "status": "Full" if occupied >= hall.capacity else "Available"
+            "status": "Full" if occupied >= hall.capacity else "Available",
         })
 
     return result
