@@ -11,7 +11,7 @@ interface Session {
 
 interface Batch {
   batch: string;
-  subject: string;
+  subject_name: string;
   subject_code: string;
   students: number;
 }
@@ -41,21 +41,22 @@ export default function SeatAllocationPage() {
   }, []);
 
   async function loadSessions() {
-    try {
-      const res = await fetch(`${API}/api/allocation/sessions`);
-      const data = await res.json();
+  try {
+    const res = await fetch(`${API}/api/exam-routine/sessions`);
+    const data = await res.json();
 
-      setSessions(data);
+    setSessions(Array.isArray(data) ? data : []);
 
-      if (data.length > 0) {
-        setSelectedSession(
-          `${data[0].exam_date}|${data[0].exam_time}`
-        );
-      }
-    } catch (err) {
-      console.error(err);
+    if (Array.isArray(data) && data.length > 0) {
+      setSelectedSession(
+        `${data[0].exam_date}|${data[0].exam_time}`
+      );
     }
+  } catch (err) {
+    console.error(err);
+    setSessions([]);
   }
+}
 
   async function loadRooms() {
     try {
@@ -75,28 +76,38 @@ export default function SeatAllocationPage() {
   }, [selectedSession]);
 
   async function loadSessionDetails() {
-    const [date, time] = selectedSession.split("|");
+  const [date, time] = selectedSession.split("|");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const res = await fetch(
-        `${API}/api/allocation/session?exam_date=${encodeURIComponent(
-          date
-        )}&exam_time=${encodeURIComponent(time)}`
-      );
+  try {
+    const res = await fetch(
+      `${API}/api/seat-allocation/preview`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          exam_date: date,
+          exam_time: time,
+          batches: [],
+          rooms: [],
+        }),
+      }
+    );
 
-      const data = await res.json();
+    const data = await res.json();
 
-      setBatches(data.batches || []);
-      setSelectedBatches([]);
-    } catch (err) {
-      console.error(err);
-      setBatches([]);
-    }
-
-    setLoading(false);
+    setBatches(data.batches || []);
+    setSelectedBatches([]);
+  } catch (err) {
+    console.error(err);
+    setBatches([]);
   }
+
+  setLoading(false);
+}
 
   function toggleBatch(batch: string) {
     if (selectedBatches.includes(batch)) {
@@ -263,7 +274,7 @@ async function generateAllocation() {
                         </h3>
 
                         <p className="text-gray-600 mt-1">
-                          Subject : {batch.subject}
+                          Subject : {batch.subject_name}
                         </p>
 
                         <p className="text-gray-600">

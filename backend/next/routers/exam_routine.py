@@ -171,3 +171,17 @@ async def upload_routine(
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=400, detail=str(e))
+@router.get("/sessions")
+def get_sessions():
+    with get_raw_db() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT DISTINCT
+                exam_date,
+                exam_time
+            FROM exam_routines
+            ORDER BY exam_date, exam_time;
+        """)
+
+        return cursor.fetchall()
