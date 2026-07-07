@@ -607,18 +607,21 @@ def get_hall_allocation(hall_id: int, exam_date: str, exam_time: str):
             cursor.execute(
                 """
                 SELECT
-                    student_id,
-                    batch_name,
-                    subject_code,
-                    subject_name,
-                    row_no,
-                    bench_no,
-                    seat_no
-                FROM seat_allocations
-                WHERE hall_id=%s
-                AND exam_date=%s
-                AND exam_time=%s
-                ORDER BY row_no, bench_no, seat_no;
+                    sa.student_id,
+                    s.full_name,
+                    sa.batch_name,
+                    sa.subject_code,
+                    sa.subject_name,
+                    sa.row_no,
+                    sa.bench_no,
+                    sa.seat_no
+                FROM seat_allocations sa
+                LEFT JOIN students s
+                ON s.student_id = sa.student_id
+                WHERE sa.hall_id=%s
+                AND sa.exam_date=%s
+                AND sa.exam_time=%s
+                ORDER BY sa.row_no, sa.bench_no, sa.seat_no;
                 """,
                 (hall_id, exam_date, exam_time),
             )

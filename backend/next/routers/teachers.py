@@ -19,6 +19,7 @@ class TeacherSchema(BaseModel):
 
 class TeacherResponse(BaseModel):
     id: int
+    user_id: int
     name: str
     email: str
     department: str
@@ -61,6 +62,7 @@ def get_teachers():
                 """
                 SELECT
                     t.teacher_id AS id,
+                    t.user_id AS user_id,
                     t.full_name AS name,
                     u.username AS email,
                     d.department_name AS department
@@ -76,9 +78,10 @@ def get_teachers():
                 teachers.append(
                     {
                         "id": safe_get_field(row, "id", 0),
-                        "name": safe_get_field(row, "name", 1),
-                        "email": safe_get_field(row, "email", 2),
-                        "department": safe_get_field(row, "department", 3) or "GENERIC",
+                        "user_id": safe_get_field(row, "user_id", 1),
+                        "name": safe_get_field(row, "name", 2),
+                        "email": safe_get_field(row, "email", 3),
+                        "department": safe_get_field(row, "department", 4) or "GENERIC",
                     }
                 )
 
@@ -139,6 +142,7 @@ def create_teacher(teacher: TeacherSchema):
 
             return {
                 "id": teacher_id,
+                "user_id": user_id,
                 "name": clean_name,
                 "email": clean_email,
                 "department": clean_department,

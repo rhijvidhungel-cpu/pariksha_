@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface Teacher {
   id: number;
+  user_id: number;
   name: string;
   email: string;
   department: string;
 }
+
+const getErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
 
 export default function TeachersManagement() {
   const router = useRouter();
@@ -31,19 +35,7 @@ export default function TeachersManagement() {
   const [editEmail, setEditEmail] = useState("");
   const [editDept, setEditDept] = useState("");
 
-  useEffect(() => {
-    const name = localStorage.getItem("username");
-    const role = localStorage.getItem("role");
-
-    if (!name || role !== "admin") {
-      router.push("/");
-      return;
-    }
-
-    fetchTeachers();
-  }, [router]);
-
-  const fetchTeachers = async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(API_BASE_URL);
@@ -54,15 +46,29 @@ export default function TeachersManagement() {
       }
 
       setTeachers(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatusMsg({
         type: "error",
-        text: err.message || "Failed to load teacher records.",
+        text: getErrorMessage(err, "Failed to load teacher records."),
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const name = localStorage.getItem("username");
+    const role = localStorage.getItem("role");
+
+    if (!name || role !== "admin") {
+      router.push("/");
+      return;
+    }
+
+    queueMicrotask(() => {
+      void fetchTeachers();
+    });
+  }, [fetchTeachers, router]);
 
   const handleManualInsertSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,10 +98,10 @@ export default function TeachersManagement() {
       setFullName("");
       setEmailAddress("");
       await fetchTeachers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatusMsg({
         type: "error",
-        text: err.message || "Backend server connection issue.",
+        text: getErrorMessage(err, "Backend server connection issue."),
       });
     }
   };
@@ -134,10 +140,10 @@ export default function TeachersManagement() {
         text: "Teacher updated in teachers table and users table.",
       });
       await fetchTeachers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatusMsg({
         type: "error",
-        text: err.message || "Failed to update teacher.",
+        text: getErrorMessage(err, "Failed to update teacher."),
       });
     }
   };
@@ -162,10 +168,10 @@ export default function TeachersManagement() {
         text: "Teacher deleted from teachers table and users table.",
       });
       await fetchTeachers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatusMsg({
         type: "error",
-        text: err.message || "Delete operation failed.",
+        text: getErrorMessage(err, "Delete operation failed."),
       });
     }
   };
@@ -220,6 +226,7 @@ export default function TeachersManagement() {
                 required
               />
             </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">
                 Email Address
@@ -232,6 +239,7 @@ export default function TeachersManagement() {
                 required
               />
             </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">
                 Assigned Department
@@ -248,6 +256,7 @@ export default function TeachersManagement() {
                 <option value="Natural Sciences">Natural Sciences</option>
               </select>
             </div>
+
             <button
               type="submit"
               className="w-full mt-2 bg-[#4F46E5] text-white text-xs font-bold py-3.5 rounded-xl cursor-pointer"
@@ -279,6 +288,7 @@ export default function TeachersManagement() {
                   <th className="py-3 px-4 text-center w-[140px]">Actions</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-gray-100 text-sm">
                 {loading ? (
                   <tr>
@@ -338,6 +348,7 @@ export default function TeachersManagement() {
             <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide mb-4">
               Edit Faculty Details
             </h3>
+
             <form onSubmit={handleUpdateSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">
@@ -351,6 +362,7 @@ export default function TeachersManagement() {
                   required
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">
                   Email Address / Username
@@ -363,6 +375,7 @@ export default function TeachersManagement() {
                   required
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">
                   Assigned Department
@@ -379,6 +392,7 @@ export default function TeachersManagement() {
                   <option value="Natural Sciences">Natural Sciences</option>
                 </select>
               </div>
+
               <div className="flex justify-end gap-3 mt-2">
                 <button
                   type="button"
