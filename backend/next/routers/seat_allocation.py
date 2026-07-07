@@ -131,6 +131,14 @@ def fetch_room_usage(cursor, exam_date, exam_time):
     return {item["hall_id"]: item["allocated"] for item in cursor.fetchall()}
 
 
+def room_physical_capacity(room):
+    return (
+        room["rows_count"]
+        * room["benches_per_row"]
+        * room["seats_per_bench"]
+    )
+
+
 def fetch_existing_allocations(cursor, exam_date, exam_time, hall_ids):
     if not hall_ids:
         return []
@@ -221,7 +229,13 @@ def preview_allocation(data: AllocationRequest):
 
             cursor.execute(
                 """
-                SELECT hall_id, room_no, capacity
+                SELECT
+                    hall_id,
+                    room_no,
+                    capacity,
+                    rows_count,
+                    benches_per_row,
+                    seats_per_bench
                 FROM exam_halls
                 ORDER BY room_no;
                 """
@@ -229,14 +243,18 @@ def preview_allocation(data: AllocationRequest):
 
             rooms = []
             for room in cursor.fetchall():
+                physical_capacity = room_physical_capacity(room)
+                usable_capacity = min(room["capacity"], physical_capacity)
                 allocated = room_usage.get(room["hall_id"], 0)
-                remaining = max(room["capacity"] - allocated, 0)
+                remaining = max(usable_capacity - allocated, 0)
 
                 rooms.append(
                     {
                         "hall_id": room["hall_id"],
                         "room_no": room["room_no"],
                         "capacity": room["capacity"],
+                        "physical_capacity": physical_capacity,
+                        "usable_capacity": usable_capacity,
                         "allocated": allocated,
                         "remaining": remaining,
                         "is_full": remaining == 0,
@@ -377,13 +395,15 @@ def generate_allocation(data: AllocationRequest):
                 if not room:
                     continue
 
+                physical_capacity = room_physical_capacity(room)
+                usable_capacity = min(room["capacity"], physical_capacity)
                 allocated_count = room_usage.get(room["hall_id"], 0)
-                remaining_capacity = max(room["capacity"] - allocated_count, 0)
+                remaining_capacity = max(usable_capacity - allocated_count, 0)
 
                 if remaining_capacity == 0:
                     continue
 
-                total_capacity += room["capacity"]
+                total_capacity += usable_capacity
                 available_capacity += remaining_capacity
 
                 room_seats = [
@@ -415,7 +435,9 @@ def generate_allocation(data: AllocationRequest):
                             f"Every student must get a seat. Selected rooms have "
                             f"{available_capacity} available seats, but {len(students)} "
                             "students need seats. Please select another room with enough "
-                            "remaining seats."
+                            "remaining seats. If a room capacity looks higher than this, "
+                            "check its rows, benches per row, and seats per bench because "
+                            "the system can only allocate physical seats from the room layout."
                         ),
                         "required_students": len(students),
                         "available_capacity": available_capacity,
@@ -555,3 +577,68 @@ def delete_room_allocation(exam_date: str, exam_time: str, hall_id: int):
         conn.commit()
 
     return {"success": True, "message": f"Allocation removed for hall {hall_id}."}
+
+
+@router.get("/hall/{hall_id}")
+def get_hall_allocation(hall_id: int, exam_date: str, exam_time: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+                    hall_id,
+                    room_no,
+                    capacity,
+                    rows_count,
+                    benches_per_row,
+                    seats_per_bench
+                FROM exam_halls
+                WHERE hall_id=%s;
+                """,
+                (hall_id,),
+            )
+            hall = cursor.fetchone()
+
+            if not hall:
+                raise HTTPException(status_code=404, detail="Hall not found.")
+
+            cursor.execute(
+                """
+                SELECT
+                    student_id,
+                    batch_name,
+                    subject_code,
+                    subject_name,
+                    row_no,
+                    bench_no,
+                    seat_no
+                FROM seat_allocations
+                WHERE hall_id=%s
+                AND exam_date=%s
+                AND exam_time=%s
+                ORDER BY row_no, bench_no, seat_no;
+                """,
+                (hall_id, exam_date, exam_time),
+            )
+            allocations = cursor.fetchall()
+
+            physical_capacity = room_physical_capacity(hall)
+            usable_capacity = min(hall["capacity"], physical_capacity)
+
+            return {
+                **hall,
+                "physical_capacity": physical_capacity,
+                "usable_capacity": usable_capacity,
+                "allocated": len(allocations),
+                "remaining": max(usable_capacity - len(allocations), 0),
+                "exam_date": exam_date,
+                "exam_time": exam_time,
+                "allocations": allocations,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

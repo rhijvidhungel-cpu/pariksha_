@@ -21,6 +21,8 @@ interface Room {
   hall_id: number;
   room_no: string;
   capacity: number;
+  physical_capacity?: number;
+  usable_capacity?: number;
   allocated?: number;
   remaining?: number;
   is_full?: boolean;
@@ -410,6 +412,11 @@ export default function SeatAllocationPage() {
                         <div>
                           <h3 className="font-bold">Room {room.room_no}</h3>
                           <p className="text-gray-600 mt-1">Capacity : {room.capacity}</p>
+                          {room.usable_capacity !== undefined && room.usable_capacity !== room.capacity && (
+                            <p className="text-amber-700 font-semibold">
+                              Usable layout seats : {room.usable_capacity}
+                            </p>
+                          )}
                           <p className="text-gray-600">Allocated : {allocated}</p>
                           <p className={`font-semibold ${disabled ? "text-red-600" : "text-green-700"}`}>
                             Remaining : {remaining}
