@@ -388,11 +388,11 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
           <span className="text-xs font-semibold uppercase tracking-wider">Syncing room matrices...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="w-full">
           
           {/* LEFT: ROOMS LIST CARDS */}
-          <div className="lg:col-span-5 grid grid-cols-1 gap-4">
-            <h2 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-1">Room Registries ({rooms.length})</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <h2 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-1 col-span-full">Room Registries ({rooms.length})</h2>
             
             {rooms.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-400 text-xs font-mono">
