@@ -406,11 +406,47 @@ def generate_allocation(data: AllocationRequest):
                     detail="Selected rooms are already full for this exam slot.",
                 )
 
+            if available_capacity < len(students):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "INSUFFICIENT_CAPACITY",
+                        "message": (
+                            f"Every student must get a seat. Selected rooms have "
+                            f"{available_capacity} available seats, but {len(students)} "
+                            "students need seats. Please select another room with enough "
+                            "remaining seats."
+                        ),
+                        "required_students": len(students),
+                        "available_capacity": available_capacity,
+                        "remaining": len(students) - available_capacity,
+                        "remaining_students": students[available_capacity:],
+                    },
+                )
+
             allocations, remaining_students = allocate_students(
                 students,
                 all_seats,
                 existing_allocations,
             )
+
+            if remaining_students:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "ALLOCATION_INCOMPLETE",
+                        "message": (
+                            f"{len(remaining_students)} students could not be seated "
+                            "because of the seating rules. No allocation was saved. "
+                            "Please select another room or clear/change room allocations, "
+                            "then generate again."
+                        ),
+                        "allocated_preview": len(allocations),
+                        "remaining": len(remaining_students),
+                        "remaining_students": remaining_students,
+                        "available_capacity": available_capacity,
+                    },
+                )
 
             for allocation in allocations:
                 cursor.execute(
@@ -452,10 +488,10 @@ def generate_allocation(data: AllocationRequest):
             conn.commit()
 
             return {
-                "status": "COMPLETE" if len(remaining_students) == 0 else "ROOM_FULL",
+                "status": "COMPLETE",
                 "allocated": len(allocations),
-                "remaining": len(remaining_students),
-                "remaining_students": remaining_students,
+                "remaining": 0,
+                "remaining_students": [],
                 "allocations": allocations,
                 "generated_seats": len(all_seats),
                 "total_capacity": total_capacity,

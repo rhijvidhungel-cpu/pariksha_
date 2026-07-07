@@ -178,7 +178,15 @@ export default function SeatAllocationPage() {
         alert(`Allocation successful! Status: ${data.status}`);
         await loadSessionDetails();
       } else {
-        alert("Error: " + data.detail);
+        const detail = data.detail;
+
+        if (typeof detail === "object" && detail !== null) {
+          alert(
+            `${detail.message}\n\nRemaining students: ${detail.remaining ?? "N/A"}`
+          );
+        } else {
+          alert("Error: " + detail);
+        }
       }
     } catch (err) {
       console.error(err);
