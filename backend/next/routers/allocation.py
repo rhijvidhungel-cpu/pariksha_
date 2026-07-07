@@ -149,3 +149,39 @@ def get_room(room_id: int, db: Session = Depends(get_db)):
         "seats_per_bench": room.seats_per_bench,
         "allocations": allocations
     }
+@router.put("/{room_id}")
+def update_room(room_id: int, room: ExamHallCreate, db: Session = Depends(get_db)):
+    hall = db.query(ExamHall).filter(ExamHall.hall_id == room_id).first()
+
+    if hall is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    hall.room_no = room.room_no
+    hall.rows_count = room.rows_count
+    hall.benches_per_row = room.benches_per_row
+    hall.seats_per_bench = room.seats_per_bench
+    hall.capacity = room.capacity
+
+    db.commit()
+
+    return {"message": "Room updated successfully"}
+from sqlalchemy import text
+
+@router.delete("/{room_id}")
+def delete_room(room_id: int, db: Session = Depends(get_db)):
+    db.execute(
+        text("DELETE FROM seat_allocations WHERE hall_id=:id"),
+        {"id": room_id},
+    )
+
+    hall = db.query(ExamHall).filter(
+        ExamHall.hall_id == room_id
+    ).first()
+
+    if hall is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    db.delete(hall)
+    db.commit()
+
+    return {"message": "Room deleted successfully"}
