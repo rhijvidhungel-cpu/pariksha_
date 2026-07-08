@@ -162,10 +162,11 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                 if composite_username in existing_usernames or roll_val in existing_usernames:
                     skipped_duplicates += 1
                     continue 
-                
+                parts = composite_username.split("-")
+                student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
                 cursor.execute(
                     "INSERT INTO users (username, password, role) VALUES (%s, %s, 'student') RETURNING user_id;",
-                    (composite_username, "student123")
+                     (composite_username, student_password)
                 )
                 user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
                 
@@ -218,9 +219,11 @@ def add_manual_student(payload: dict):
                 detail=f"Roll ID '{roll}' already exists within the chosen batch structure '{batch_str}'."
             )
             
+        parts = composite_username.split("-")
+        student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
         cursor.execute(
             "INSERT INTO users (username, password, role) VALUES (%s, %s, 'student') RETURNING user_id;",
-            (composite_username, "student123")
+            (composite_username, student_password)
         )
         user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
         

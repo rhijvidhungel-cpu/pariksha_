@@ -117,6 +117,9 @@ def create_teacher(teacher: TeacherSchema):
                 )
 
             department_id = resolve_department(cursor, clean_department)
+            
+            email_prefix = clean_email.split("@")[0]
+            teacher_password = f"{clean_department}-{email_prefix}"
 
             cursor.execute(
                 """
@@ -124,7 +127,7 @@ def create_teacher(teacher: TeacherSchema):
                 VALUES (%s, %s, 'teacher')
                 RETURNING user_id;
                 """,
-                (clean_email, "teacher123"),
+                (clean_email, teacher_password),
             )
             user_id = safe_get_field(cursor.fetchone(), "user_id", 0)
 
