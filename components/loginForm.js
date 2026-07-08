@@ -26,8 +26,13 @@ const LoginForm = () => {
 
             if (res.ok && data.success) {
                 if (typeof window !== "undefined") {
-                    localStorage.setItem("username", data.user.name);
+                    localStorage.setItem("user_id", data.user_id);
+                    localStorage.setItem("username", data.username);
                     localStorage.setItem("role", data.role);
+                }
+                if (data.first_login) {
+                    router.push("/change-password");
+                    return;
                 }
 
                 if (data.role === "student") router.push("/dashboards/studentdashboard");

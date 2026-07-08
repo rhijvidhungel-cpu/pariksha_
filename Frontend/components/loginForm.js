@@ -25,15 +25,22 @@ const LoginForm = () => {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                if (typeof window !== "undefined") {
-                    localStorage.setItem("username", data.user.name);
-                    localStorage.setItem("role", data.role);
+                localStorage.setItem("user_id", data.user_id);
+                localStorage.setItem("username", data.username);
+                localStorage.setItem("role", data.role);
+                if (data.first_login) {
+                    router.push("/change-password");
+                    return;
                 }
-
-                if (data.role === "student") router.push("/dashboards/studentdashboard");
-                else if (data.role === "teacher") router.push("/dashboards/teacherdashboard");
-                else if (data.role === "admin") router.push("/dashboards/admindashboard");
-                else router.push("/");
+                if (data.role === "student")
+                    router.push("/dashboards/studentdashboard");
+                else if (data.role === "teacher")
+                    router.push("/dashboards/teacherdashboard");
+                else if (data.role === "admin")
+                    router.push("/dashboards/admindashboard");
+                else
+                    router.push("/");
+            
                 return;
             }
 
