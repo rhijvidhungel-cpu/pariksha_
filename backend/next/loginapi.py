@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from backend.next.models import user
-from backend.next.models import user
 from database import get_raw_db
 import bcrypt
 
@@ -46,8 +44,8 @@ def login(data: Login):
             )
 
             if not bcrypt.checkpw(
-                data.password.encode(),
-                stored_password.encode(),
+                data.password.encode("utf-8"),
+                stored_password.encode("utf-8"),
             ):
                 return {
                     "success": False,
@@ -110,11 +108,19 @@ def change_password(data: ChangePassword):
                 user["password"] if isinstance(user, dict) else user[0]
             )
 
-            if old_password != data.current_password:
+            if not bcrypt.checkpw(
+            data.current_password.encode("utf-8"),
+                old_password.encode("utf-8"),
+            ):
                 raise HTTPException(
                     status_code=400,
                     detail="Current password is incorrect.",
                 )
+
+            hashed_password = bcrypt.hashpw(
+                data.new_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
 
             cursor.execute(
                 """
@@ -124,7 +130,7 @@ def change_password(data: ChangePassword):
                 WHERE user_id=%s;
                 """,
                 (
-                    data.new_password,
+                    hashed_password,
                     data.user_id,
                 ),
             )
