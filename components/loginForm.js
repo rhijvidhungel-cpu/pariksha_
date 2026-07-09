@@ -10,6 +10,7 @@ const LoginForm = () => {
     const router = useRouter();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -113,24 +114,28 @@ const LoginForm = () => {
                                 <FontAwesomeIcon icon={faLock} style={styles.fieldIcon} />
                                 Password
                             </label>
-                            <input
-                                id="Password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                autoComplete="off"
-                                style={styles.textInput}
-                                placeholder="Enter your password"
-                                required
-                            />
+
+                            <div style={styles.passwordWrapper}>
+                                <input
+                                    id="Password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="off"
+                                    style={styles.passwordInput}
+                                    placeholder="Enter your password"
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeButton}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                        >
-                            {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
-                        </button>
                         {/* SUBMIT */}
                         <div style={styles.actionWrapper}>
                             <button type="submit" style={styles.primarySubmitBtn}>
@@ -219,6 +224,31 @@ const styles = {
         outline: "none",
         backgroundColor: "#FFFFFF",
         boxSizing: "border-box",
+    },
+    passwordWrapper: {
+        position: "relative",
+    },
+    passwordInput: {
+        width: "100%",
+        padding: "12px 45px 12px 16px",
+        border: "1px solid #D1D5DB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#1F2937",
+        outline: "none",
+        backgroundColor: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+    eyeButton: {
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#6B7280",
+        padding: 0,
     },
     actionWrapper: {
         marginTop: "32px",
