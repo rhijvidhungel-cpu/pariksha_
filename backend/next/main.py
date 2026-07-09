@@ -166,15 +166,32 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                 parts = composite_username.split("-")
                 student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
 
-            hashed_password = bcrypt.hashpw(
-                student_password.encode("utf-8"),
-                bcrypt.gensalt()
-                ).decode("utf-8")
-
-            cursor.execute(
-                "INSERT INTO users (username, password, role, first_login) VALUES (%s, %s, 'student', TRUE) RETURNING user_id;",
-                (composite_username, hashed_password)
-            )
+                cursor.execute(
+                    """
+                    INSERT INTO users
+                    (
+                        username,
+                        password,
+                        temporary_password,
+                        role,
+                        first_login
+                    )
+                    VALUES
+                    (
+                        %s,
+                        %s,
+                        %s,
+                        'student',
+                        TRUE
+                    )
+                    RETURNING user_id;
+                    """,
+                    (
+                        composite_username,
+                        student_password,
+                        student_password,
+                    ),
+                )
             user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
                 
             cursor.execute(
@@ -229,14 +246,31 @@ def add_manual_student(payload: dict):
         parts = composite_username.split("-")
         student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
 
-        hashed_password = bcrypt.hashpw(
-            student_password.encode("utf-8"),
-            bcrypt.gensalt()
-        ).decode("utf-8")
-
         cursor.execute(
-            "INSERT INTO users (username, password, role, first_login) VALUES (%s, %s, 'student', TRUE) RETURNING user_id;",
-            (composite_username, hashed_password)
+            """
+            INSERT INTO users
+            (
+                username,
+                password,
+                temporary_password,
+                role,
+                first_login
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                'student',
+                TRUE
+            )
+            RETURNING user_id;
+            """,
+            (
+                composite_username,
+                student_password,
+                student_password,
+            ),
         )
         user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
         
