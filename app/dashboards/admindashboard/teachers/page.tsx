@@ -11,19 +11,28 @@ interface Teacher {
   department: string;
 }
 
+interface Department {
+  department_id: number;
+  department_name: string;
+}
+
 const getErrorMessage = (err: unknown, fallback: string) =>
   err instanceof Error ? err.message : fallback;
 
+const API_ROOT =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://pariksha-9qjs.onrender.com";
+const TEACHERS_API_URL = `${API_ROOT}/api/dashboards/admindashboard/teachers`;
+const DEPARTMENTS_API_URL = `${API_ROOT}/api/departments`;
+
 export default function TeachersManagement() {
   const router = useRouter();
-  const API_BASE_URL =
-    "https://pariksha-9qjs.onrender.com/api/dashboards/admindashboard/teachers";
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [fullName, setFullName] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
-  const [department, setDepartment] = useState("Computer Science");
+  const [department, setDepartment] = useState("");
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{
     type: "success" | "error";
@@ -38,7 +47,7 @@ export default function TeachersManagement() {
   const fetchTeachers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(API_BASE_URL);
+      const res = await fetch(TEACHERS_API_URL);
       const data = await res.json();
 
       if (!res.ok) {
@@ -56,6 +65,27 @@ export default function TeachersManagement() {
     }
   }, []);
 
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const res = await fetch(DEPARTMENTS_API_URL);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Failed to load departments.");
+      }
+
+      const nextDepartments = Array.isArray(data) ? data : [];
+      setDepartments(nextDepartments);
+      setDepartment((prev) => prev || nextDepartments[0]?.department_name || "");
+      setEditDept((prev) => prev || nextDepartments[0]?.department_name || "");
+    } catch (err: unknown) {
+      setStatusMsg({
+        type: "error",
+        text: getErrorMessage(err, "Failed to load department options."),
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const name = localStorage.getItem("username");
     const role = localStorage.getItem("role");
@@ -67,15 +97,16 @@ export default function TeachersManagement() {
 
     queueMicrotask(() => {
       void fetchTeachers();
+      void fetchDepartments();
     });
-  }, [fetchTeachers, router]);
+  }, [fetchDepartments, fetchTeachers, router]);
 
   const handleManualInsertSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatusMsg(null);
 
     try {
-      const res = await fetch(API_BASE_URL, {
+      const res = await fetch(TEACHERS_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,7 +149,7 @@ export default function TeachersManagement() {
     if (!editingTeacher) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}?id=${editingTeacher.id}`, {
+      const res = await fetch(`${TEACHERS_API_URL}?id=${editingTeacher.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -154,7 +185,7 @@ export default function TeachersManagement() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}?id=${teacherId}`, {
+      const res = await fetch(`${TEACHERS_API_URL}?id=${teacherId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -248,12 +279,14 @@ export default function TeachersManagement() {
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 cursor-pointer"
+                required
               >
-                <option value="Computer Science">Computer Science</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Natural Sciences">Natural Sciences</option>
+                <option value="">Select department</option>
+                {departments.map((dept) => (
+                  <option key={dept.department_id} value={dept.department_name}>
+                    {dept.department_name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -384,12 +417,14 @@ export default function TeachersManagement() {
                   value={editDept}
                   onChange={(e) => setEditDept(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 cursor-pointer"
+                  required
                 >
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Civil Engineering">Civil Engineering</option>
-                  <option value="Electrical Engineering">Electrical Engineering</option>
-                  <option value="Mechanical Engineering">Mechanical Engineering</option>
-                  <option value="Natural Sciences">Natural Sciences</option>
+                  <option value="">Select department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.department_id} value={dept.department_name}>
+                      {dept.department_name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

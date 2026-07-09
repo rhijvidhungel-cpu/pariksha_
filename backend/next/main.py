@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 # Import your routers correctly
 from routers import teachers
+from routers import departments
 from routers.allocation import router as allocation_router
 from routers.seat_allocation import router as seat_allocation_router
 from routers import batches
@@ -24,7 +25,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://pariksha-vjxk.vercel.app"], # Your specific frontend URL
+    allow_origins=[
+        "https://pariksha-vjxk.vercel.app",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,6 +45,7 @@ def safe_get_field(record, key, index=0):
 
 # Mount the routers to the FastAPI application instance
 app.include_router(teachers.router)
+app.include_router(departments.router)
 app.include_router(loginapi.router) 
 app.include_router(exam_routine_router)
 app.include_router(allocation_router, prefix="/rooms")
