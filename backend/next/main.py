@@ -6,6 +6,7 @@ import bcrypt
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # Import your routers correctly
 from routers import teachers
@@ -20,7 +21,8 @@ import loginapi
 from database import get_raw_db
 
 app = FastAPI()
-
+class ResetPassword(BaseModel):
+    username: str
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://pariksha-vjxk.vercel.app"], # Your specific frontend URL
@@ -166,6 +168,11 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                 parts = composite_username.split("-")
                 student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
 
+                hashed_password = bcrypt.hashpw(
+                    student_password.encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
+
                 cursor.execute(
                     """
                     INSERT INTO users
@@ -188,20 +195,20 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                     """,
                     (
                         composite_username,
-                        student_password,
+                        hashed_password,
                         student_password,
                     ),
                 )
-            user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
-                
-            cursor.execute(
+                user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
+
+                cursor.execute(
                     "INSERT INTO students (full_name, user_id, department_id, batch_id) VALUES (%s, %s, %s, %s);",
                     (name_val, user_id, dept_id, batch_id)
                 )
-                
-            existing_usernames.add(composite_username)
-            inserted += 1
-                
+
+                existing_usernames.add(composite_username)
+                inserted += 1
+            
             conn.commit()
             
             msg = f"Parsed successfully for batch {target_batch_enforced}. Added: {inserted} records."
@@ -246,6 +253,11 @@ def add_manual_student(payload: dict):
         parts = composite_username.split("-")
         student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
 
+        hashed_password = bcrypt.hashpw(
+            student_password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
         cursor.execute(
             """
             INSERT INTO users
@@ -268,7 +280,7 @@ def add_manual_student(payload: dict):
             """,
             (
                 composite_username,
-                student_password,
+                hashed_password,
                 student_password,
             ),
         )
@@ -371,7 +383,23 @@ def update_student_credentials(payload: dict):
             raise HTTPException(status_code=400, detail=f"Roll number '{new_roll}' already exists in batch '{batch_name}'.")
             
         cursor.execute("UPDATE students SET full_name = %s WHERE student_id = %s;", (new_name, student_id))
-        cursor.execute("UPDATE users SET username = %s WHERE user_id = %s;", (new_composite_username, user_id))
+        parts = new_composite_username.split("-")
+        new_temp_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET
+                username=%s,
+                temporary_password=%s
+            WHERE user_id=%s;
+            """,
+            (
+                new_composite_username,
+                new_temp_password,
+                user_id,
+            ),
+        )
         
         conn.commit()
         return {"success": True, "message": "Student credentials modified successfully."}
@@ -381,3 +409,94 @@ def version():
         "message": "NEW BACKEND",
         "date": "2026-07-04"
     }
+    
+@app.get("/password/{username}")
+def view_password(username: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT temporary_password
+                FROM users
+                WHERE username=%s;
+                """,
+                (username,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            password = (
+                user["temporary_password"]
+                if isinstance(user, dict)
+                else user[0]
+            )
+
+            return {
+                "temporary_password": password
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/reset-password")
+def reset_password(data: ResetPassword):
+
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT temporary_password
+                FROM users
+                WHERE username=%s;
+                """,
+                (data.username,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            temp_password = (
+                user["temporary_password"]
+                if isinstance(user, dict)
+                else user[0]
+            )
+
+            hashed_password = bcrypt.hashpw(
+                temp_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET password=%s,
+                    first_login=TRUE
+                WHERE username=%s;
+                """,
+                (
+                    hashed_password,
+                    data.username,
+                ),
+            )
+
+            conn.commit()
+
+            return {
+                "success": True,
+                "message": "Password reset successfully."
+            }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
