@@ -179,7 +179,7 @@ def reset_password(data: ResetPassword):
                 FROM users
                 WHERE user_id=%s;
                 """,
-                (data.user_id,),
+                (data.username,),
             )
 
             user = cursor.fetchone()
@@ -213,11 +213,11 @@ def reset_password(data: ResetPassword):
                 UPDATE users
                 SET password=%s,
                     first_login=TRUE
-                WHERE user_id=%s;
+                WHERE username=%s;
                 """,
                 (
                     hashed,
-                    data.user_id,
+                    data.username,
                 ),
             )
 
