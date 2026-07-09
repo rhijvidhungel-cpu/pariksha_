@@ -43,10 +43,17 @@ def login(data: Login):
                 user["password"] if isinstance(user, dict) else user[2]
             )
 
-            if not bcrypt.checkpw(
-                data.password.encode("utf-8"),
-                stored_password.encode("utf-8"),
-            ):
+# If password is already hashed
+            if stored_password.startswith("$2"):
+                valid = bcrypt.checkpw(
+                    data.password.encode("utf-8"),
+                    stored_password.encode("utf-8"),
+                )
+# Otherwise compare as plain text (old users)
+            else:
+                valid = (stored_password == data.password)
+
+            if not valid:
                 return {
                     "success": False,
                     "message": "Invalid login",
