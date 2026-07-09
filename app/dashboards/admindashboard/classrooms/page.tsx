@@ -11,6 +11,7 @@ export interface StudentRoster {
   name: string;
   department: string;
   batch: string;
+  username: string;
 }
 
 export interface ExamRoom {

@@ -6,6 +6,7 @@ interface Student {
   id: string; 
   name: string;
   roll: string;
+  username: string;
   batch: string;
 }
 
@@ -44,12 +45,14 @@ export default function StudentsManagement() {
         const normalizedData = data.map((item: any, idx: number) => {
           const rawRoll = safeGetField(item, 'roll', 2) || "";
           const dbSn = safeGetField(item, 'sn', 0);
+          const username = safeGetField(item, "roll", 2) || "";
+
           return {
-            // ✅ Fix: Generate a guaranteed unique client-side key using index combined with database fallback
             id: dbSn ? String(dbSn) : `student-${idx}`,
-            name: safeGetField(item, 'name', 1) || "Unknown",
-            roll: rawRoll.includes('-') ? rawRoll.split('-')[0] : rawRoll,
-            batch: safeGetField(item, 'batch', 3) || "N/A"
+            name: safeGetField(item, "name", 1) || "Unknown",
+            roll: username.includes("-") ? username.split("-")[0] : username,
+            username: username,
+            batch: safeGetField(item, "batch", 3) || "N/A",
           };
         });
         
@@ -233,6 +236,39 @@ const fetchBatches = async () => {
     }
   };
 
+  const viewPassword = async (username: string) => {
+    const res = await fetch(`${apiBaseUrl}/password/${username}`);
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`Temporary Password:\n\n${data.temporary_password}`);
+    } else {
+      alert(data.detail);
+    }
+  };
+
+  const resetPassword = async (username: string) => {
+    if (!confirm("Reset this student's password?")) return;
+
+    const res = await fetch(`${apiBaseUrl}/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Password reset successfully.");
+    } else {
+      alert(data.detail);
+    }
+  };
+
   const filteredStudents = students.filter(s => {
     const cleanQuery = searchQuery.trim().toLowerCase();
     
@@ -372,7 +408,7 @@ const fetchBatches = async () => {
                   <th className="p-4">Name Parameters</th>
                   <th className="p-4">Roll Reference</th>
                   <th className="p-4">Batch Link</th>
-                  <th className="p-4 text-center w-40">Actions</th>
+                  <th className="p-4 text-center w-[380px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700 font-medium">
@@ -414,7 +450,9 @@ const fetchBatches = async () => {
                         <span className="px-2.5 py-1 text-xs font-bold font-mono text-indigo-600 border border-indigo-200 rounded-md bg-indigo-50/40">{student.batch}</span>
                       </td>
                       
-                      <td className="p-4 text-center flex items-center justify-center gap-3">
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-3 whitespace-nowrap">
+              
                         {editingId === student.id ? (
                           <>
                             <button onClick={() => handleSaveEdit(student.id, student.batch)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold hover:underline">Save</button>
@@ -422,11 +460,42 @@ const fetchBatches = async () => {
                           </>
                         ) : (
                           <>
-                            <button onClick={() => startEditing(student)} className="text-[#4F46E5] hover:text-indigo-900 text-xs font-bold transition-all hover:underline">Edit</button>
-                            <span className="text-gray-300">|</span>
-                            <button onClick={() => handlePurgeRecord(student.roll, student.batch)} className="text-[#E11D48] hover:text-red-800 text-xs font-bold transition-all hover:underline">Remove</button>
+                            <button
+                              onClick={() => startEditing(student)}
+                              className="text-[#4F46E5] text-xs font-bold hover:underline"
+                            >
+                              Edit
+                            </button>
+
+                            <span>|</span>
+
+                            <button
+                              onClick={() => viewPassword(student.username)}
+                              className="text-green-600 text-xs font-bold hover:underline"
+                            >
+                              View Password
+                            </button>
+
+                            <span>|</span>
+
+                            <button
+                              onClick={() => resetPassword(student.username)}
+                              className="text-orange-600 text-xs font-bold hover:underline"
+                            >
+                              Reset
+                            </button>
+
+                            <span>|</span>
+
+                            <button
+                              onClick={() => handlePurgeRecord(student.roll, student.batch)}
+                              className="text-red-600 text-xs font-bold hover:underline"
+                            >
+                              Remove
+                            </button>
                           </>
                         )}
+                      </div>
                       </td>
                     </tr>
                   ))
