@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr
 from typing import List
-
+import bcrypt
 from database import get_raw_db
 
 
@@ -117,17 +117,22 @@ def create_teacher(teacher: TeacherSchema):
                 )
 
             department_id = resolve_department(cursor, clean_department)
-            
+
             email_prefix = clean_email.split("@")[0]
             teacher_password = f"{clean_department}-{email_prefix}"
 
+            hashed_password = bcrypt.hashpw(
+                teacher_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
             cursor.execute(
                 """
-                INSERT INTO users (username, password, role)
-                VALUES (%s, %s, 'teacher')
+                INSERT INTO users (username, password, role, first_login)
+                VALUES (%s, %s, 'teacher', TRUE)
                 RETURNING user_id;
                 """,
-                (clean_email, teacher_password),
+                (clean_email, hashed_password),
             )
             user_id = safe_get_field(cursor.fetchone(), "user_id", 0)
 

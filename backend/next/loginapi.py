@@ -1,42 +1,72 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from database import get_raw_db 
+from backend.next.models import user
+from backend.next.models import user
+from database import get_raw_db
+import bcrypt
 
 router = APIRouter()
+
 
 class Login(BaseModel):
     username: str
     password: str
-    
+
+
 class ChangePassword(BaseModel):
     user_id: int
     current_password: str
     new_password: str
+
 
 @router.post("/login")
 def login(data: Login):
     try:
         with get_raw_db() as conn:
             cursor = conn.cursor()
-            
-            # Query to check credentials
-            query = """
-                SELECT user_id, username, role, first_login
-                FROM users
-                WHERE username = %s AND password = %s;
-            """
-            
-            cursor.execute(query, (data.username, data.password))
-            user = cursor.fetchone()
-            
-            if not user:
-                return {"success": False, "message": "Invalid login"}
 
-            # FIX: Reading fields dynamically as a dictionary (RealDictCursor compatible)
-            user_id = user.get("user_id") if isinstance(user, dict) else user[0]
-            username = user.get("username") if isinstance(user, dict) else user[1]
-            role = user.get("role") if isinstance(user, dict) else user[2]
-            first_login = user.get("first_login") if isinstance(user, dict) else user[3]
+            cursor.execute(
+                """
+                SELECT user_id, username,password, role, first_login
+                FROM users
+                WHERE username=%s;
+                """,
+                (data.username,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                return {
+                    "success": False,
+                    "message": "Invalid login",
+                }
+            stored_password = (
+                user["password"] if isinstance(user, dict) else user[2]
+            )
+
+            if not bcrypt.checkpw(
+                data.password.encode(),
+                stored_password.encode(),
+            ):
+                return {
+                    "success": False,
+                    "message": "Invalid login",
+                }
+
+            # Supports both RealDictCursor and normal cursor
+            user_id = user["user_id"] if isinstance(user, dict) else user[0]
+            username = user["username"] if isinstance(user, dict) else user[1]
+            role = user["role"] if isinstance(user, dict) else user[3]
+            first_login = user["first_login"] if isinstance(user, dict) else user[4]
+
+            # DEBUG
+            print("========== LOGIN SUCCESS ==========")
+            print("User ID      :", user_id)
+            print("Username     :", username)
+            print("Role         :", role)
+            print("First Login  :", first_login)
+            print("===================================")
 
             return {
                 "success": True,
@@ -45,10 +75,14 @@ def login(data: Login):
                 "role": role,
                 "first_login": first_login,
             }
-            
+
     except Exception as e:
-        return {"success": False, "message": f"Database error pipeline halt: {str(e)}"}
-    
+        return {
+            "success": False,
+            "message": f"Database error pipeline halt: {str(e)}",
+        }
+
+
 @router.post("/change-password")
 def change_password(data: ChangePassword):
     try:
@@ -67,7 +101,10 @@ def change_password(data: ChangePassword):
             user = cursor.fetchone()
 
             if not user:
-                raise HTTPException(status_code=404, detail="User not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="User not found",
+                )
 
             old_password = (
                 user["password"] if isinstance(user, dict) else user[0]
@@ -76,7 +113,7 @@ def change_password(data: ChangePassword):
             if old_password != data.current_password:
                 raise HTTPException(
                     status_code=400,
-                    detail="Current password is incorrect."
+                    detail="Current password is incorrect.",
                 )
 
             cursor.execute(
@@ -96,11 +133,14 @@ def change_password(data: ChangePassword):
 
             return {
                 "success": True,
-                "message": "Password changed successfully."
+                "message": "Password changed successfully.",
             }
 
     except HTTPException:
         raise
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )

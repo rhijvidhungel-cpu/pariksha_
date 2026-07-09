@@ -1,67 +1,115 @@
 """
 Seed script to initialize the database with tables and test data.
-Run this once to set up the database for development.
 
-Usage: python seed.py
+Usage:
+python seed.py
 """
 
 from sqlalchemy import create_engine, text
 from database import DATABASE_URL, SessionLocal
+import bcrypt
+
 
 def seed_database():
-    """Create tables and seed test user accounts."""
-    
+    """Create users table and seed default accounts."""
+
     engine = create_engine(DATABASE_URL)
-    
+
     with engine.connect() as conn:
-        # Create users table if it doesn't exist
+
         create_table_sql = text("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT NOT NULL
-            );
+        CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL,
+            first_login BOOLEAN DEFAULT TRUE
+        );
         """)
+
         conn.execute(create_table_sql)
         conn.commit()
-        print("✓ Created 'users' table (if not exists)")
-    
-    # Seed test accounts
+
+        print("✓ Users table ready.")
+
     db = SessionLocal()
+
     try:
-        # Check if test users already exist
-        check_query = text("SELECT COUNT(*) as cnt FROM users WHERE username IN ('student', 'teacher', 'admin')")
-        result = db.execute(check_query).fetchone()
-        
-        if result and result[0] > 0:
-            print("✓ Test users already exist. Skipping seed.")
-            return
-        
-        # Insert test users
-        insert_query = text("""
-            INSERT INTO users (username, password, role) VALUES
-                ('student', 'student123', 'student'),
-                ('teacher', 'teacher123', 'teacher'),
-                ('admin', 'admin123', 'admin')
-            ON CONFLICT (username) DO NOTHING;
+
+        check_query = text("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE username IN ('student','teacher','admin');
         """)
-        db.execute(insert_query)
+
+        result = db.execute(check_query).fetchone()
+
+        if result and result[0] > 0:
+            print("✓ Default users already exist.")
+            return
+
+        student_password = bcrypt.hashpw(
+            "student123".encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        teacher_password = bcrypt.hashpw(
+            "teacher123".encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        admin_password = bcrypt.hashpw(
+            "admin123".encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        insert_query = text("""
+        INSERT INTO users
+        (
+            username,
+            password,
+            role,
+            first_login
+        )
+        VALUES
+            (:student_username,:student_password,'student',FALSE),
+            (:teacher_username,:teacher_password,'teacher',FALSE),
+            (:admin_username,:admin_password,'admin',FALSE)
+        ON CONFLICT (username) DO NOTHING;
+        """)
+
+        db.execute(
+            insert_query,
+            {
+                "student_username": "student",
+                "student_password": student_password,
+
+                "teacher_username": "teacher",
+                "teacher_password": teacher_password,
+
+                "admin_username": "admin",
+                "admin_password": admin_password,
+            },
+        )
+
         db.commit()
-        print("✓ Seeded test users:")
-        print("  - student / student123 (role: student)")
-        print("  - teacher / teacher123 (role: teacher)")
-        print("  - admin / admin123 (role: admin)")
-    
+
+        print("✓ Seeded default accounts")
+        print("Student : student / student123")
+        print("Teacher : teacher / teacher123")
+        print("Admin   : admin / admin123")
+
     except Exception as e:
-        print(f"✗ Error seeding database: {e}")
+
         db.rollback()
+        print(f"✗ Error: {e}")
         raise
-    
+
     finally:
         db.close()
-    
-    print("\n✓ Database seeding complete!")
+
+    print("\n✓ Database seeding completed.")
+
 
 if __name__ == "__main__":
     seed_database()
