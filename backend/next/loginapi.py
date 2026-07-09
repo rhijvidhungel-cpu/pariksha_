@@ -17,7 +17,7 @@ class ChangePassword(BaseModel):
     new_password: str
     
 class ResetPassword(BaseModel):
-    user_id: int
+    username: str
 
 
 @router.post("/login")

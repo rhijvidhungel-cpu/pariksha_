@@ -21,8 +21,7 @@ import loginapi
 from database import get_raw_db
 
 app = FastAPI()
-class ResetPassword(BaseModel):
-    username: str
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://pariksha-vjxk.vercel.app"], # Your specific frontend URL
@@ -443,60 +442,3 @@ def view_password(username: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.post("/reset-password")
-def reset_password(data: ResetPassword):
-
-    try:
-        with get_raw_db() as conn:
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                SELECT temporary_password
-                FROM users
-                WHERE username=%s;
-                """,
-                (data.username,),
-            )
-
-            user = cursor.fetchone()
-
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-
-            temp_password = (
-                user["temporary_password"]
-                if isinstance(user, dict)
-                else user[0]
-            )
-
-            hashed_password = bcrypt.hashpw(
-                temp_password.encode("utf-8"),
-                bcrypt.gensalt()
-            ).decode("utf-8")
-
-            cursor.execute(
-                """
-                UPDATE users
-                SET password=%s,
-                    first_login=TRUE
-                WHERE username=%s;
-                """,
-                (
-                    hashed_password,
-                    data.username,
-                ),
-            )
-
-            conn.commit()
-
-            return {
-                "success": True,
-                "message": "Password reset successfully."
-            }
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
