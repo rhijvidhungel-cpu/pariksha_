@@ -15,6 +15,9 @@ class ChangePassword(BaseModel):
     user_id: int
     current_password: str
     new_password: str
+    
+class ResetPassword(BaseModel):
+    user_id: int
 
 
 @router.post("/login")
@@ -111,23 +114,28 @@ def change_password(data: ChangePassword):
                     detail="User not found",
                 )
 
-            old_password = (
+            stored_password = (
                 user["password"] if isinstance(user, dict) else user[0]
             )
 
-            if not bcrypt.checkpw(
-            data.current_password.encode("utf-8"),
-                old_password.encode("utf-8"),
-            ):
+            if stored_password.startswith("$2"):
+                valid = bcrypt.checkpw(
+                    data.current_password.encode(),
+                    stored_password.encode(),
+                )
+            else:
+                valid = (stored_password == data.current_password)
+
+            if not valid:
                 raise HTTPException(
                     status_code=400,
                     detail="Current password is incorrect.",
                 )
 
             hashed_password = bcrypt.hashpw(
-                data.new_password.encode("utf-8"),
+                data.new_password.encode(),
                 bcrypt.gensalt()
-            ).decode("utf-8")
+            ).decode()
 
             cursor.execute(
                 """
@@ -151,6 +159,74 @@ def change_password(data: ChangePassword):
 
     except HTTPException:
         raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+        
+@router.post("/reset-password")
+def reset_password(data: ResetPassword):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            # Find user
+            cursor.execute(
+                """
+                SELECT username, role
+                FROM users
+                WHERE user_id=%s;
+                """,
+                (data.user_id,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(
+                    status_code=404,
+                    detail="User not found",
+                )
+
+            username = user["username"] if isinstance(user, dict) else user[0]
+            role = user["role"] if isinstance(user, dict) else user[1]
+
+            # Generate temporary password
+            if role == "student":
+                temporary_password = "Student@123"
+
+            elif role == "teacher":
+                temporary_password = "Teacher@123"
+
+            else:
+                temporary_password = "Admin@123"
+
+            hashed = bcrypt.hashpw(
+                temporary_password.encode(),
+                bcrypt.gensalt()
+            ).decode()
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET password=%s,
+                    first_login=TRUE
+                WHERE user_id=%s;
+                """,
+                (
+                    hashed,
+                    data.user_id,
+                ),
+            )
+
+            conn.commit()
+
+            return {
+                "success": True,
+                "temporary_password": temporary_password,
+            }
 
     except Exception as e:
         raise HTTPException(
