@@ -76,7 +76,7 @@ export default function ChangePasswordPage() {
 
             <div className="bg-white shadow-xl rounded-2xl w-full max-w-md p-8">
 
-                <h1 className="text-2xl font-bold text-center mb-2">
+                <h1 className="text-2xl font-bold text-center mb-2 text-gray-900">
                     Change Password
                 </h1>
 
@@ -87,13 +87,13 @@ export default function ChangePasswordPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
 
                     <div>
-                        <label className="font-medium">
+                        <label className="font-medium text-gray-900">
                             Current Password
                         </label>
 
                         <input
                             type="password"
-                            className="border rounded-lg w-full mt-2 p-3"
+                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
                             value={currentPassword}
                             onChange={(e)=>setCurrentPassword(e.target.value)}
                             required
@@ -101,13 +101,13 @@ export default function ChangePasswordPage() {
                     </div>
 
                     <div>
-                        <label className="font-medium">
+                        <label className="font-medium text-gray-900">
                             New Password
                         </label>
 
                         <input
                             type="password"
-                            className="border rounded-lg w-full mt-2 p-3"
+                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
                             value={newPassword}
                             onChange={(e)=>setNewPassword(e.target.value)}
                             required
@@ -115,13 +115,13 @@ export default function ChangePasswordPage() {
                     </div>
 
                     <div>
-                        <label className="font-medium">
+                        <label className="font-medium text-gray-900">
                             Confirm Password
                         </label>
 
                         <input
                             type="password"
-                            className="border rounded-lg w-full mt-2 p-3"
+                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
                             value={confirmPassword}
                             onChange={(e)=>setConfirmPassword(e.target.value)}
                             required
