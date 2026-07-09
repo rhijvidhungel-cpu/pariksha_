@@ -1,5 +1,5 @@
 "use client";
-
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
@@ -10,12 +10,13 @@ const LoginForm = () => {
     const router = useRouter();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const apiBaseUrl = "https://pariksha-9qjs.onrender.com";
             const res = await fetch(`${apiBaseUrl}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -25,22 +26,20 @@ const LoginForm = () => {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                localStorage.setItem("user_id", data.user_id);
-                localStorage.setItem("username", data.username);
-                localStorage.setItem("role", data.role);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem("user_id", data.user_id);
+                    localStorage.setItem("username", data.username);
+                    localStorage.setItem("role", data.role);
+                }
                 if (data.first_login) {
                     router.push("/change-password");
                     return;
                 }
-                if (data.role === "student")
-                    router.push("/dashboards/studentdashboard");
-                else if (data.role === "teacher")
-                    router.push("/dashboards/teacherdashboard");
-                else if (data.role === "admin")
-                    router.push("/dashboards/admindashboard");
-                else
-                    router.push("/");
-            
+
+                if (data.role === "student") router.push("/dashboards/studentdashboard");
+                else if (data.role === "teacher") router.push("/dashboards/teacherdashboard");
+                else if (data.role === "admin") router.push("/dashboards/admindashboard");
+                else router.push("/");
                 return;
             }
 
@@ -80,69 +79,202 @@ const LoginForm = () => {
     };
 
     return (
-        /* Cleaned container: width fills the parent absolute wrapper perfectly */
-        <div className="w-full">
-            <div className="bg-white shadow-md rounded px-8 pt-6 pb-8">
-                <h2 className="text-3xl font-bold mb-6 text-white">
-                    <span className="bg-linear-to-r text-transparent from-blue-500 to-purple-500 bg-clip-text">Pariksha</span>
-                </h2>
-                <form onSubmit={handleSubmit}>
-
-                    <div className="mb-6">
-                        <label htmlFor="Username" className="block text-gray-700 text-sm font-bold mb-2">
-                            <FontAwesomeIcon icon={faUser} className="mr-2 inline w-3.5" />
-                            Username
-                        </label>
-                        <div>
+        /* The main outer frame spans full dimensions overlaying your background */
+        <div style={styles.pageOverlayWrapper}>
+            
+            {/* Left side viewport column acting as the anchor box */}
+            <div style={styles.leftFormColumn}>
+                <div style={styles.formCard}>
+                    <h2 style={styles.brandTitle}>
+                        <span style={styles.gradientText}>Pariksha</span>
+                    </h2>
+                    
+                    <form onSubmit={handleSubmit}>
+                        {/* USERNAME FIELD */}
+                        <div style={styles.fieldGroup}>
+                            <label htmlFor="Username" style={styles.fieldLabel}>
+                                <FontAwesomeIcon icon={faUser} style={styles.fieldIcon} />
+                                Username
+                            </label>
                             <input
                                 id="Username"
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 autoComplete="off"
-                                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                style={styles.textInput}
                                 placeholder="Enter your username"
+                                required
                             />
                         </div>
-                    </div>
 
-                    <div className="mb-6">
-                        <label htmlFor="Password" className="block text-gray-700 text-sm font-bold mb-2">
-                            <FontAwesomeIcon icon={faLock} className="mr-2 inline w-3.5" />
-                            Password
-                        </label>
-                        <div>
-                            <input
-                                id="Password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                autoComplete="off"
-                                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                placeholder="Enter your password"
-                            />
+                        {/* PASSWORD FIELD */}
+                        <div style={styles.fieldGroup}>
+                            <label htmlFor="Password" style={styles.fieldLabel}>
+                                <FontAwesomeIcon icon={faLock} style={styles.fieldIcon} />
+                                Password
+                            </label>
+
+                            <div style={styles.passwordWrapper}>
+                                <input
+                                    id="Password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="off"
+                                    style={styles.passwordInput}
+                                    placeholder="Enter your password"
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeButton}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                        {/* SUBMIT */}
+                        <div style={styles.actionWrapper}>
+                            <button type="submit" style={styles.primarySubmitBtn}>
+                                Login
+                            </button>
+                        </div>
 
-                    <div className="flex item-center justify-center">
-                        <button
-                            type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
-                        >
-                            Login
-                        </button>
-                    </div>
-
-                    <div className="text-center mt-4">
-                        <Link href="/contact-admin" className="text-gray-600 hover:underline">
-                            Forgot Password?
-                        </Link>
-                    </div>
-
-                </form>
+                        <div style={styles.supportLinkCenter}>
+                            <Link href="/contact-admin" style={styles.forgotPassLink}>
+                                Forgot Password?
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
+
+            {/* Right empty spacer area to allow background art to stay visible */}
+            <div style={styles.rightSpacerColumn} />
         </div>
     );
+};
+
+// CLEAN ALIGNED STYLING HOOKS
+const styles = {
+    pageOverlayWrapper: {
+        display: "flex",
+        width: "100%",
+        minHeight: "100vh",
+        fontFamily: "Inter, system-ui, sans-serif",
+    },
+    leftFormColumn: {
+        width: "100%",
+        maxWidth: "420px", /* Beautifully thin card profile width */
+        backgroundColor: "rgba(255, 255, 255, 0.96)", /* Subtle premium opaque white overlay */
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 40px",
+        boxShadow: "10px 0 30px rgba(0, 0, 0, 0.1)",
+        zIndex: 10,
+    },
+    rightSpacerColumn: {
+        flex: 1,
+        display: "block", /* Keeps the right side empty so background asset isn't hidden */
+    },
+    formCard: {
+        width: "100%",
+    },
+    brandTitle: {
+        fontSize: "32px",
+        fontWeight: 800,
+        marginBottom: "32px",
+        textAlign: "left",
+        letterSpacing: "-0.02em",
+    },
+    gradientText: {
+        background: "linear-gradient(to right, #3B82F6, #A855F7)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+    },
+    fieldGroup: {
+        marginBottom: "24px",
+    },
+    fieldLabel: {
+        display: "flex",
+        alignItems: "center",
+        color: "#4B5563",
+        fontSize: "14px",
+        fontWeight: 600,
+        marginBottom: "8px",
+    },
+    fieldIcon: {
+        marginRight: "8px",
+        color: "#4B5563",
+        width: "14px",
+        height: "14px",
+    },
+    textInput: {
+        width: "100%",
+        padding: "12px 16px",
+        border: "1px solid #D1D5DB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#1F2937",
+        outline: "none",
+        backgroundColor: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+    passwordWrapper: {
+        position: "relative",
+    },
+    passwordInput: {
+        width: "100%",
+        padding: "12px 45px 12px 16px",
+        border: "1px solid #D1D5DB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#1F2937",
+        outline: "none",
+        backgroundColor: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+    eyeButton: {
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#6B7280",
+        padding: 0,
+    },
+    actionWrapper: {
+        marginTop: "32px",
+    },
+    primarySubmitBtn: {
+        width: "100%",
+        background: "linear-gradient(to right, #3B82F6, #A855F7)",
+        color: "#FFFFFF",
+        fontWeight: 700,
+        padding: "14px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: "pointer",
+        fontSize: "15px",
+        boxShadow: "0 4px 12px rgba(147, 51, 234, 0.2)",
+    },
+    supportLinkCenter: {
+        textAlign: "center",
+        marginTop: "20px",
+    },
+    forgotPassLink: {
+        color: "#6B7280",
+        fontSize: "13px",
+        textDecoration: "none",
+        fontWeight: 500,
+    },
 };
 
 export default LoginForm;

@@ -1,5 +1,5 @@
 "use client";
-
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
@@ -124,7 +124,13 @@ const LoginForm = () => {
                                 required
                             />
                         </div>
-
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                        >
+                            {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                        </button>
                         {/* SUBMIT */}
                         <div style={styles.actionWrapper}>
                             <button type="submit" style={styles.primarySubmitBtn}>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://pariksha-9qjs.onrender.com";
 
@@ -11,6 +13,10 @@ export default function ChangePasswordPage() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [loading, setLoading] = useState(false);
 
@@ -91,13 +97,23 @@ export default function ChangePasswordPage() {
                             Current Password
                         </label>
 
-                        <input
-                            type="password"
-                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
-                            value={currentPassword}
-                            onChange={(e)=>setCurrentPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showCurrentPassword ? "text" : "password"}
+                                className="border rounded-lg w-full mt-2 p-3 pr-10 text-gray-900"
+                                value={currentPassword}
+                                onChange={(e)=>setCurrentPassword(e.target.value)}
+                                required
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute right-3 top-[58%] -translate-y-1/2 text-gray-500"
+                            >
+                                {showCurrentPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                            </button>
+                        </div>
                     </div>
 
                     <div>
@@ -105,13 +121,23 @@ export default function ChangePasswordPage() {
                             New Password
                         </label>
 
-                        <input
-                            type="password"
-                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
-                            value={newPassword}
-                            onChange={(e)=>setNewPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showNewPassword ? "text" : "password"}
+                                className="border rounded-lg w-full mt-2 p-3 pr-10 text-gray-900"
+                                value={newPassword}
+                                onChange={(e)=>setNewPassword(e.target.value)}
+                                required
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute right-3 top-[58%] -translate-y-1/2 text-gray-500"
+                            >
+                                {showNewPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                            </button>
+                        </div>
                     </div>
 
                     <div>
@@ -119,13 +145,23 @@ export default function ChangePasswordPage() {
                             Confirm Password
                         </label>
 
-                        <input
-                            type="password"
-                            className="border rounded-lg w-full mt-2 p-3 text-gray-900"
-                            value={confirmPassword}
-                            onChange={(e)=>setConfirmPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                className="border rounded-lg w-full mt-2 p-3 pr-10 text-gray-900"
+                                value={confirmPassword}
+                                onChange={(e)=>setConfirmPassword(e.target.value)}
+                                required
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-[58%] -translate-y-1/2 text-gray-500"
+                            >
+                                {showConfirmPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                            </button>
+                        </div>
                     </div>
 
                     <button
