@@ -168,16 +168,17 @@ def change_password(data: ChangePassword):
         
 @router.post("/reset-password")
 def reset_password(data: ResetPassword):
+
     try:
         with get_raw_db() as conn:
             cursor = conn.cursor()
 
-            # Find user
+            # Get the user's original temporary password
             cursor.execute(
                 """
-                SELECT username, role
+                SELECT temporary_password
                 FROM users
-                WHERE user_id=%s;
+                WHERE username=%s;
                 """,
                 (data.username,),
             )
@@ -190,24 +191,19 @@ def reset_password(data: ResetPassword):
                     detail="User not found",
                 )
 
-            username = user["username"] if isinstance(user, dict) else user[0]
-            role = user["role"] if isinstance(user, dict) else user[1]
+            temporary_password = (
+                user["temporary_password"]
+                if isinstance(user, dict)
+                else user[0]
+            )
 
-            # Generate temporary password
-            if role == "student":
-                temporary_password = "Student@123"
-
-            elif role == "teacher":
-                temporary_password = "Teacher@123"
-
-            else:
-                temporary_password = "Admin@123"
-
-            hashed = bcrypt.hashpw(
-                temporary_password.encode(),
+            # Hash the original temporary password
+            hashed_password = bcrypt.hashpw(
+                temporary_password.encode("utf-8"),
                 bcrypt.gensalt()
-            ).decode()
+            ).decode("utf-8")
 
+            # Restore password and force first login
             cursor.execute(
                 """
                 UPDATE users
@@ -216,7 +212,7 @@ def reset_password(data: ResetPassword):
                 WHERE username=%s;
                 """,
                 (
-                    hashed,
+                    hashed_password,
                     data.username,
                 ),
             )
@@ -226,7 +222,11 @@ def reset_password(data: ResetPassword):
             return {
                 "success": True,
                 "temporary_password": temporary_password,
+                "message": "Password reset successfully."
             }
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         raise HTTPException(
