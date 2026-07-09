@@ -136,6 +136,91 @@ def create_department(payload: DepartmentCreate):
             raise HTTPException(status_code=500, detail=str(err))
 
 
+@router.put("/{department_id}", response_model=DepartmentResponse)
+def update_department(department_id: int, payload: DepartmentCreate):
+    department_name = clean_name(payload.department_name, "Department name")
+
+    with get_raw_db() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "SELECT department_id FROM departments WHERE department_id = %s;",
+                (department_id,),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="Department not found.")
+
+            cursor.execute(
+                """
+                SELECT department_id
+                FROM departments
+                WHERE LOWER(department_name) = LOWER(%s)
+                AND department_id != %s;
+                """,
+                (department_name, department_id),
+            )
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Department name already exists.")
+
+            cursor.execute(
+                """
+                UPDATE departments
+                SET department_name = %s
+                WHERE department_id = %s
+                RETURNING department_id, department_name;
+                """,
+                (department_name, department_id),
+            )
+            updated = cursor.fetchone()
+            conn.commit()
+
+            return {
+                "department_id": safe_get_field(updated, "department_id", 0),
+                "department_name": safe_get_field(updated, "department_name", 1),
+                "batches": [],
+            }
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as err:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=str(err))
+
+
+@router.delete("/{department_id}")
+def delete_department(department_id: int):
+    with get_raw_db() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "SELECT department_id FROM departments WHERE department_id = %s;",
+                (department_id,),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="Department not found.")
+
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM batches WHERE department_id = %s;",
+                (department_id,),
+            )
+            batch_count = safe_get_field(cursor.fetchone(), "total", 0) or 0
+            if batch_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Delete or move all batches before removing this department.",
+                )
+
+            cursor.execute("DELETE FROM departments WHERE department_id = %s;", (department_id,))
+            conn.commit()
+            return {"success": True, "message": "Department deleted successfully."}
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as err:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=str(err))
+
+
 @router.post("/{department_id}/batches", response_model=BatchResponse, status_code=status.HTTP_201_CREATED)
 def create_batch(department_id: int, payload: BatchCreate):
     batch_name = clean_name(payload.batch_name, "Batch name").upper()
@@ -178,6 +263,105 @@ def create_batch(department_id: int, payload: BatchCreate):
                 "department_id": safe_get_field(created, "department_id", 2),
                 "student_count": 0,
             }
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as err:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=str(err))
+
+
+@router.put("/batches/{batch_id}", response_model=BatchResponse)
+def update_batch(batch_id: int, payload: BatchCreate):
+    batch_name = clean_name(payload.batch_name, "Batch name").upper()
+
+    with get_raw_db() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT batch_id, department_id
+                FROM batches
+                WHERE batch_id = %s;
+                """,
+                (batch_id,),
+            )
+            batch = cursor.fetchone()
+            if not batch:
+                raise HTTPException(status_code=404, detail="Batch not found.")
+
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM students WHERE batch_id = %s;",
+                (batch_id,),
+            )
+            student_count = safe_get_field(cursor.fetchone(), "total", 0) or 0
+            if student_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Batch rename is blocked after students are added because usernames include the batch name.",
+                )
+
+            cursor.execute(
+                """
+                SELECT batch_id
+                FROM batches
+                WHERE LOWER(batch_name) = LOWER(%s)
+                AND batch_id != %s;
+                """,
+                (batch_name, batch_id),
+            )
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Batch name already exists.")
+
+            cursor.execute(
+                """
+                UPDATE batches
+                SET batch_name = %s
+                WHERE batch_id = %s
+                RETURNING batch_id, batch_name, department_id;
+                """,
+                (batch_name, batch_id),
+            )
+            updated = cursor.fetchone()
+            conn.commit()
+
+            return {
+                "batch_id": safe_get_field(updated, "batch_id", 0),
+                "batch_name": safe_get_field(updated, "batch_name", 1),
+                "department_id": safe_get_field(updated, "department_id", 2),
+                "student_count": 0,
+            }
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as err:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=str(err))
+
+
+@router.delete("/batches/{batch_id}")
+def delete_batch(batch_id: int):
+    with get_raw_db() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT batch_id FROM batches WHERE batch_id = %s;", (batch_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="Batch not found.")
+
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM students WHERE batch_id = %s;",
+                (batch_id,),
+            )
+            student_count = safe_get_field(cursor.fetchone(), "total", 0) or 0
+            if student_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Remove students from this batch before deleting it.",
+                )
+
+            cursor.execute("DELETE FROM batches WHERE batch_id = %s;", (batch_id,))
+            conn.commit()
+            return {"success": True, "message": "Batch deleted successfully."}
         except HTTPException:
             conn.rollback()
             raise
