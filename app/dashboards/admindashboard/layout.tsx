@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import NotificationModal from "../../components/NotificationModal";
+import ChangePasswordModal from "../../components/ChangePasswordModal";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -10,6 +12,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminName, setAdminName] = useState<string>("Master Admin");
   const [adminEmail, setAdminEmail] = useState<string>("root@ku.edu.np");
   const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     const name = localStorage.getItem("username");
@@ -26,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     
     const email = localStorage.getItem("email");
     if (email) setAdminEmail(email);
-  }, [pathname, router]); // Re-evaluate cleanly on route modifications
+  }, [pathname, router]);
 
   // Evaluates which path tab highlights based on current URL location
   const getNavClass = (targetPath: string) => {
@@ -80,16 +84,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={() => router.push("/dashboards/admindashboard/seat-allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
               <span className="text-base">🔀</span> <span>Seat Allocation Engine</span>
             </button>
+            <button 
+              onClick={() => setShowNotificationModal(true)}
+              className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all text-left w-full border-none bg-transparent cursor-pointer font-medium text-[#C7D2FE] hover:bg-white/5"
+            >
+              <span className="text-base">🔔</span> <span>Send Notifications</span>
+            </button>
           </nav>
         </div>
 
         <div className="flex flex-col gap-3">
           <button 
+            onClick={() => setShowPasswordModal(true)}
+            className="flex items-center justify-center gap-2 w-full border border-[#818CF8]/40 text-[#C7D2FE] rounded-lg py-2.5 text-xs font-medium hover:bg-white/5 transition-colors bg-transparent"
+          >
+            🔐 Change Password
+          </button>
+          <button 
             onClick={() => {
               localStorage.clear();
               router.push("/");
             }}
-            className="flex items-center justify-center gap-2 w-full bg-red-500/10 border border-red-500/20 text-[#FCA5A5] rounded-lg py-2.5 text-xs font-medium hover:bg-red-500/20 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full bg-red-500/10 border border-red-500/20 text-[#FCA5A5] rounded-lg py-2.5 text-xs font-medium hover:bg-red-500/20 transition-colors"
           >
             🚪 Log out
           </button>
@@ -119,7 +135,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           
           <div className="flex items-center gap-5">
-            <button className="relative p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer" aria-label="Alert Registers">
+            <button 
+              onClick={() => setShowNotificationModal(true)}
+              className="relative p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer" 
+              aria-label="Notifications"
+            >
               <span className="absolute top-[6px] right-[6px] w-2 h-2 rounded-full bg-[#4F46E5] border-2 border-white"></span>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -146,6 +166,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+
+      {/* MODALS */}
+      <NotificationModal isOpen={showNotificationModal} onClose={() => setShowNotificationModal(false)} />
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        username={adminName}
+      />
     </div>
   );
 }
