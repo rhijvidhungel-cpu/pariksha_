@@ -1,14 +1,22 @@
 import io
-import os
 import traceback
 import pandas as pd
+import bcrypt
+
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-# Import your routers correctly from the routers folder
-from routers import teachers 
-from routers.exam_routine import router as exam_routine_router # ✅ FIXED: Pointing inside the routers folder
+# Import your routers correctly
+from routers import teachers
+from routers import departments
+from routers.allocation import router as allocation_router
+from routers.seat_allocation import router as seat_allocation_router
+from routers import batches
+from routers.exam_routine import router as exam_routine_router
 import loginapi
+#from routers import seat_allocation
 
 # Import local db pool mapping initialization file
 from database import get_raw_db
@@ -17,7 +25,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://pariksha-vjxk.vercel.app",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,8 +45,76 @@ def safe_get_field(record, key, index=0):
 
 # Mount the routers to the FastAPI application instance
 app.include_router(teachers.router)
+app.include_router(departments.router)
 app.include_router(loginapi.router) 
-app.include_router(exam_routine_router) # ✅ This will now mount perfectly!
+app.include_router(exam_routine_router)
+app.include_router(allocation_router, prefix="/rooms")
+app.include_router(batches.router)
+app.include_router(seat_allocation_router)
+
+
+@app.on_event("startup")
+def ensure_schema():
+    """Create missing tables and migrate legacy admin username to email format."""
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS hall_invigilators (
+                    id SERIAL PRIMARY KEY,
+                    hall_id INT NOT NULL,
+                    teacher_user_id INT NOT NULL,
+                    exam_date TEXT NOT NULL,
+                    exam_time TEXT NOT NULL,
+                    UNIQUE (hall_id, exam_date, exam_time)
+                );
+                """
+            )
+
+            cursor.execute(
+                """
+                SELECT user_id
+                FROM users
+                WHERE username = 'admin'
+                AND role = 'admin';
+                """
+            )
+            legacy_admin = cursor.fetchone()
+
+            cursor.execute(
+                """
+                SELECT user_id
+                FROM users
+                WHERE LOWER(username) = LOWER('admin@ku.edu.np')
+                AND role = 'admin';
+                """
+            )
+            email_admin = cursor.fetchone()
+
+            if legacy_admin and not email_admin:
+                admin_temp_hash = bcrypt.hashpw(
+                    b"temporary_password",
+                    bcrypt.gensalt(),
+                ).decode("utf-8")
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET username = 'admin@ku.edu.np',
+                        password = %s,
+                        temporary_password = 'temporary_password',
+                        first_login = TRUE
+                    WHERE username = 'admin'
+                    AND role = 'admin';
+                    """,
+                    (admin_temp_hash,),
+                )
+
+            conn.commit()
+    except Exception as err:
+        print(f"Schema bootstrap skipped: {err}")
+
 
 @app.get("/api/students")
 def get_students():
@@ -154,21 +234,50 @@ async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)
                 if composite_username in existing_usernames or roll_val in existing_usernames:
                     skipped_duplicates += 1
                     continue 
-                
+                parts = composite_username.split("-")
+                student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
+
+                hashed_password = bcrypt.hashpw(
+                    student_password.encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
+
                 cursor.execute(
-                    "INSERT INTO users (username, password, role) VALUES (%s, %s, 'student') RETURNING user_id;",
-                    (composite_username, "student123")
+                    """
+                    INSERT INTO users
+                    (
+                        username,
+                        password,
+                        temporary_password,
+                        role,
+                        first_login
+                    )
+                    VALUES
+                    (
+                        %s,
+                        %s,
+                        %s,
+                        'student',
+                        TRUE
+                    )
+                    RETURNING user_id;
+                    """,
+                    (
+                        composite_username,
+                        hashed_password,
+                        student_password,
+                    ),
                 )
                 user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
-                
+
                 cursor.execute(
                     "INSERT INTO students (full_name, user_id, department_id, batch_id) VALUES (%s, %s, %s, %s);",
                     (name_val, user_id, dept_id, batch_id)
                 )
-                
+
                 existing_usernames.add(composite_username)
                 inserted += 1
-                
+            
             conn.commit()
             
             msg = f"Parsed successfully for batch {target_batch_enforced}. Added: {inserted} records."
@@ -210,9 +319,39 @@ def add_manual_student(payload: dict):
                 detail=f"Roll ID '{roll}' already exists within the chosen batch structure '{batch_str}'."
             )
             
+        parts = composite_username.split("-")
+        student_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
+
+        hashed_password = bcrypt.hashpw(
+            student_password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
         cursor.execute(
-            "INSERT INTO users (username, password, role) VALUES (%s, %s, 'student') RETURNING user_id;",
-            (composite_username, "student123")
+            """
+            INSERT INTO users
+            (
+                username,
+                password,
+                temporary_password,
+                role,
+                first_login
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                'student',
+                TRUE
+            )
+            RETURNING user_id;
+            """,
+            (
+                composite_username,
+                hashed_password,
+                student_password,
+            ),
         )
         user_id = safe_get_field(cursor.fetchone(), 'user_id', 0)
         
@@ -313,7 +452,63 @@ def update_student_credentials(payload: dict):
             raise HTTPException(status_code=400, detail=f"Roll number '{new_roll}' already exists in batch '{batch_name}'.")
             
         cursor.execute("UPDATE students SET full_name = %s WHERE student_id = %s;", (new_name, student_id))
-        cursor.execute("UPDATE users SET username = %s WHERE user_id = %s;", (new_composite_username, user_id))
+        parts = new_composite_username.split("-")
+        new_temp_password = f"{parts[0]}-{parts[1]}@{parts[2]}"
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET
+                username=%s,
+                temporary_password=%s
+            WHERE user_id=%s;
+            """,
+            (
+                new_composite_username,
+                new_temp_password,
+                user_id,
+            ),
+        )
         
         conn.commit()
         return {"success": True, "message": "Student credentials modified successfully."}
+@app.get("/version")
+def version():
+    return {
+        "message": "NEW BACKEND",
+        "date": "2026-07-04"
+    }
+    
+@app.get("/password/{username}")
+def view_password(username: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT temporary_password
+                FROM users
+                WHERE username=%s;
+                """,
+                (username,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            password = (
+                user["temporary_password"]
+                if isinstance(user, dict)
+                else user[0]
+            )
+
+            return {
+                "temporary_password": password
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    

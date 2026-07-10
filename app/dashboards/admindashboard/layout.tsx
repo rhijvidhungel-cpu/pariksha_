@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname(); 
 
   const [adminName, setAdminName] = useState<string>("Master Admin");
-  const [adminEmail, setAdminEmail] = useState<string>("root@ku.edu.np");
+  const [adminEmail, setAdminEmail] = useState<string>("admin@ku.edu.np");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
   useEffect(() => {
@@ -23,9 +23,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     setAdminName(name);
     setIsVerified(true);
-    
-    const email = localStorage.getItem("email");
-    if (email) setAdminEmail(email);
+
+    const email = localStorage.getItem("email") || name;
+    setAdminEmail(email);
   }, [pathname, router]); // Re-evaluate cleanly on route modifications
 
   // Evaluates which path tab highlights based on current URL location
@@ -65,6 +65,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={() => router.push("/dashboards/admindashboard")} className={getNavClass("/dashboards/admindashboard")}>
               <span className="text-base">📊</span> <span>Dashboard Summary</span>
             </button>
+            <button onClick={() => router.push("/dashboards/admindashboard/academic-structure")} className={getNavClass("/dashboards/admindashboard/academic-structure")}>
+              <span className="text-base">AS</span> <span>Academic Structure</span>
+            </button>
             <button onClick={() => router.push("/dashboards/admindashboard/students")} className={getNavClass("/dashboards/admindashboard/students")}>
               <span className="text-base">🎓</span> <span>Students Directory</span>
             </button>
@@ -77,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={() => router.push("/dashboards/admindashboard/exam_routine")} className={getNavClass("/dashboards/admindashboard/exam_routine")}>
               <span className="text-base">📅</span> <span>Upload Exam Routine</span>
             </button>
-            <button onClick={() => router.push("/dashboards/admindashboard/seat-allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
+            <button onClick={() => router.push("/dashboards/admindashboard/allocation")} className={getNavClass("/dashboards/admindashboard/seat-allocation")}>
               <span className="text-base">🔀</span> <span>Seat Allocation Engine</span>
             </button>
           </nav>

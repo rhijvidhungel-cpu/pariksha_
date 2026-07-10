@@ -1,5 +1,5 @@
 "use client";
-
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
@@ -10,6 +10,7 @@ const LoginForm = () => {
     const router = useRouter();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,8 +27,16 @@ const LoginForm = () => {
 
             if (res.ok && data.success) {
                 if (typeof window !== "undefined") {
-                    localStorage.setItem("username", data.user.name);
+                    localStorage.setItem("user_id", data.user_id);
+                    localStorage.setItem("username", data.username);
                     localStorage.setItem("role", data.role);
+                    if (data.email || data.role === "admin") {
+                        localStorage.setItem("email", data.email || data.username);
+                    }
+                }
+                if (data.first_login) {
+                    router.push("/change-password");
+                    return;
                 }
 
                 if (data.role === "student") router.push("/dashboards/studentdashboard");
@@ -62,11 +71,14 @@ const LoginForm = () => {
             return;
         }
 
-        if (username === "admin" && password === "admin123") {
-            localStorage.setItem("username", "admin");
-            localStorage.setItem("role", "admin");
-            router.push("/dashboards/admindashboard");
-            return;
+        if (username === "admin@ku.edu.np" || username === "admin") {
+            if (password === "temporary_password" || password === "admin123") {
+                localStorage.setItem("username", "admin@ku.edu.np");
+                localStorage.setItem("email", "admin@ku.edu.np");
+                localStorage.setItem("role", "admin");
+                router.push("/dashboards/admindashboard");
+                return;
+            }
         }
 
         alert("Invalid credentials. Try: student/student123, teacher/teacher123, admin/admin123");
@@ -108,18 +120,28 @@ const LoginForm = () => {
                                 <FontAwesomeIcon icon={faLock} style={styles.fieldIcon} />
                                 Password
                             </label>
-                            <input
-                                id="Password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                autoComplete="off"
-                                style={styles.textInput}
-                                placeholder="Enter your password"
-                                required
-                            />
-                        </div>
 
+                            <div style={styles.passwordWrapper}>
+                                <input
+                                    id="Password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="off"
+                                    style={styles.passwordInput}
+                                    placeholder="Enter your password"
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeButton}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
                         {/* SUBMIT */}
                         <div style={styles.actionWrapper}>
                             <button type="submit" style={styles.primarySubmitBtn}>
@@ -128,8 +150,13 @@ const LoginForm = () => {
                         </div>
 
                         <div style={styles.supportLinkCenter}>
-                            <Link href="/contact-admin" style={styles.forgotPassLink}>
+                            <Link href="/forgot-password" style={styles.forgotPassLink}>
                                 Forgot Password?
+                            </Link>
+                        </div>
+                        <div style={styles.adminLinkCenter}>
+                            <Link href="/forgot-admin-password" style={styles.adminForgotLink}>
+                                Forgot password for admin?
                             </Link>
                         </div>
                     </form>
@@ -209,6 +236,31 @@ const styles = {
         backgroundColor: "#FFFFFF",
         boxSizing: "border-box",
     },
+    passwordWrapper: {
+        position: "relative",
+    },
+    passwordInput: {
+        width: "100%",
+        padding: "12px 45px 12px 16px",
+        border: "1px solid #D1D5DB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#1F2937",
+        outline: "none",
+        backgroundColor: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+    eyeButton: {
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#6B7280",
+        padding: 0,
+    },
     actionWrapper: {
         marginTop: "32px",
     },
@@ -228,11 +280,21 @@ const styles = {
         textAlign: "center",
         marginTop: "20px",
     },
+    adminLinkCenter: {
+        textAlign: "center",
+        marginTop: "10px",
+    },
     forgotPassLink: {
         color: "#6B7280",
         fontSize: "13px",
         textDecoration: "none",
         fontWeight: 500,
+    },
+    adminForgotLink: {
+        color: "#4F46E5",
+        fontSize: "12px",
+        textDecoration: "none",
+        fontWeight: 600,
     },
 };
 

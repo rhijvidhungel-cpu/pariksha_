@@ -1,140 +1,210 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-export default function UploadRoutinePage() {
-  const router = useRouter();
-  const apiBaseUrl = "https://pariksha-9qjs.onrender.com";
-  
+export default function AdminRoutinePage() {
+  const API = "https://pariksha-9qjs.onrender.com";
+
+  const [batches, setBatches] = useState<string[]>([]);
+  const [batch, setBatch] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [batches, setBatches] = useState<string[]>(["CE-2024", "CS-2020", "ME-2023"]);
-  const [currentBatchView, setCurrentBatchView] = useState("CE-2024");
   const [loading, setLoading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auth Guard
   useEffect(() => {
-    const name = localStorage.getItem("username");
-    const role = localStorage.getItem("role");
+    fetch(`${API}/api/batches`)
+      .then((res) => res.json())
+      .then((data) => {
+        setBatches(data);
+        if (data.length > 0) {
+          setBatch(data[0]);
+        }
+      });
+  }, []);
 
-    if (!name || role !== "admin") {
-      router.push("/");
-    }
-  }, [router]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      
-      if (selectedFile.type !== "application/pdf") {
-        alert("Invalid format. Please select an official PDF file.");
-        setFile(null);
-        return;
-      }
-      
-      setFile(selectedFile);
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (e.target.files?.length) {
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleUploadEngine = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
+  const removeFile = () => {
+    setFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadRoutine = async () => {
+    if (!file) {
+      alert("Please select an Excel file.");
+      return;
+    }
 
     const formData = new FormData();
-    // Matches your exact python parameters: file and batch
+
     formData.append("file", file);
-    formData.append("batch", currentBatchView.trim().toUpperCase());
+    formData.append("batch", batch);
+
+    setLoading(true);
 
     try {
-      setLoading(true);
-      
-      // Hits your exact backend router address definition string
-      const res = await fetch(`${apiBaseUrl}/api/routines/bulk`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        `${API}/api/routines/bulk`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
-      
+
       if (res.ok) {
-        alert(data.message || "Exam PDF routine parsed successfully!");
-        setFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
+        alert("Routine uploaded successfully.");
+
+        removeFile();
       } else {
-        alert(`UPLOADER REJECTION: ${data.detail || "Failed to process routine file."}`);
+        alert(data.detail);
       }
-    } catch (err) {
-      alert("Network exception: Is your Python FastAPI execution online?");
-    } finally {
-      setLoading(false);
+    } catch {
+      alert("Network Error");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="p-8 flex flex-col gap-6 w-full max-w-[640px] mx-auto">
-      <div className="flex flex-col gap-1.5">
-        <button 
-          onClick={() => router.back()} 
-          className="bg-transparent border-none text-gray-500 hover:text-gray-900 text-xs font-bold flex items-center gap-1 self-start cursor-pointer transition-colors p-0 mb-2"
-        >
-          ← Back to Dashboard
-        </button>
-        <h2 className="text-xl font-extrabold tracking-tight text-gray-900 uppercase m-0">Upload Exam Routine</h2>
-        <p className="text-xs text-gray-400 font-medium m-0">Upload the examination schedule in PDF format to process structural mappings.</p>
-      </div>
+    <div className="min-h-screen bg-[#f5f7fb] py-8 px-6">
 
-      <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-        <form onSubmit={handleUploadEngine} className="flex flex-col gap-5">
+      <div className="max-w-6xl mx-auto">
+                {/* Header Card */}
+
+        <div className="bg-white rounded-2xl border border-gray-300 shadow-md px-8 py-6">
+
+          <h1 className="text-3xl font-extrabold text-[#1f2940] uppercase">
+            Upload Examination Routine
+          </h1>
+
+        </div>
+
+        {/* Upload Card */}
+
+        <div className="bg-white rounded-3xl border border-gray-300 shadow-md max-w-3xl mx-auto mt-10 p-10">
+
+          {/* Batch */}
+
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Target Batch Scope Filter</label>
-            <div className="relative w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus-within:border-indigo-500">
-              <select 
-                value={currentBatchView} 
-                onChange={(e) => setCurrentBatchView(e.target.value)} 
-                className="w-full bg-transparent text-sm font-bold text-gray-900 font-mono outline-none cursor-pointer appearance-none"
-              >
-                {batches.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</span>
-            </div>
+
+            <label className="block text-sm font-bold text-gray-700 uppercase mb-3">
+              Target Batch
+            </label>
+
+            <select
+              value={batch}
+              onChange={(e) => setBatch(e.target.value)}
+              className="w-full border rounded-xl px-4 py-4 text-lg focus:ring-2 focus:ring-blue-500 outline-none text-black font-semibold"
+            >
+              {batches.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+
           </div>
 
-          <div 
+          {/* Upload Box */}
+
+          <div
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${
-              file ? 'border-indigo-400 bg-indigo-50/10' : 'border-gray-200 bg-gray-50/40 hover:bg-gray-50/80'
-            }`}
+            className="mt-8 border-2 border-dashed border-gray-300 rounded-2xl p-16 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
           >
+
             <input
-              type="file"
-              accept=".pdf"
               ref={fileInputRef}
+              hidden
+              type="file"
+              accept=".xlsx,.xls"
               onChange={handleFileChange}
-              className="hidden"
             />
-            <span className="text-4xl block mb-3 select-none">📄</span>
-            <p className="text-sm font-bold text-gray-800 m-0">
-              {file ? `Selected: ${file.name}` : "Click to browse or drag & drop your PDF here"}
-            </p>
-            {file && <p className="text-xs text-indigo-500 font-mono font-bold mt-1.5">({(file.size / 1024 / 1024).toFixed(2)} MB)</p>}
+
+            <div className="flex flex-col items-center">
+
+              <div className="text-7xl">
+                📊
+              </div>
+
+              <h2 className="mt-5 text-3xl font-bold text-[#24324d]">
+                Click to Upload Routine in Excel Format
+              </h2>
+
+              <p className="mt-3 text-gray-500 text-lg">
+                Supports .xlsx and .xls files
+              </p>
+
+            </div>
+
           </div>
+
+          {/* Selected File */}
+
+          {file && (
+
+            <div className="mt-8 bg-[#eef2ff] rounded-2xl p-6 flex justify-between items-center">
+
+              <div className="flex items-center gap-5">
+
+                <div className="text-5xl">
+                  📄
+                </div>
+
+                <div>
+
+                  <h3 className="font-bold text-xl text-[#24324d]">
+                    {file.name}
+                  </h3>
+
+                  <p className="text-blue-600 mt-1">
+                    Status : Ready to Upload
+                  </p>
+
+                </div>
+
+              </div>
+
+              <button
+                onClick={removeFile}
+                className="border border-red-400 text-red-600 px-5 py-3 rounded-lg hover:bg-red-50 transition"
+              >
+                Remove File
+              </button>
+
+            </div>
+
+          )}
+
+          {/* Upload Button */}
 
           <button
-            type="submit"
-            disabled={!file || loading}
-            className={`w-full text-xs font-bold py-4 px-4 rounded-xl shadow-md transition-all h-12 ${
-              !file || loading 
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none" 
-                : "bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.99]"
-            }`}
+            onClick={uploadRoutine}
+            disabled={loading}
+            className="mt-10 w-full bg-[#5668f5] hover:bg-[#4055eb] transition text-white font-bold py-5 rounded-2xl text-lg disabled:bg-gray-400"
           >
-            {loading ? "Uploading Routine..." : "Upload and Process PDF"}
+            {loading
+              ? "Uploading..."
+              : "Upload and Process Excel"}
           </button>
-        </form>
+
+        </div>
+
       </div>
+
     </div>
+
   );
+
 }

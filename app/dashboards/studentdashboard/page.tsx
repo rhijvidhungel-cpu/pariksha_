@@ -1,14 +1,11 @@
 "use client";
-import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser,faBars } from "@fortawesome/free-solid-svg-icons";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const [studentName, setStudentName] = useState("Student Name");
+  const [studentName, setStudentName] = useState("Student");
 
   useEffect(() => {
     const name = localStorage.getItem("username");
@@ -22,84 +19,53 @@ export default function StudentDashboard() {
     setStudentName(name);
   }, [router]);
 
-  const handleLogout = () => {
+  function logout() {
     localStorage.clear();
     router.push("/");
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
-        <label htmlFor="Username" className="block text-gray-700 text-sm font-bold mb-2">
-                                    <FontAwesomeIcon icon={faUser} className="mr-2 inline w-3.5" />
-                                    Kunal Panjiyar
-                                </label>
-
-        <button
-          onClick={() => router.push("/notifications")}
-          className="bg-white shadow px-4 py-2 rounded-lg hover:bg-gray-50"
-        >
-          🔔
-        </button>
-        <button
-          onClick={() => router.push("/notifications")}
-          className="bg-white shadow px-5 py-2 rounded-lg hover:bg-gray-50"
-        >
-        
-        </button>
-         <label htmlFor="bars" className="block text-gray-700 text-sm font-bold mb-2">
-                                   <FontAwesomeIcon icon={faBars} />
-                                    Username
-                                </label>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-
-        <h2 className="text-xl font-semibold mb-6">
-          Quick Actions
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
+      <section className="max-w-5xl mx-auto">
+        <div className="bg-white border border-slate-200 rounded-xl p-6 flex justify-between items-center shadow-sm">
+          <div>
+            <h1 className="text-2xl font-extrabold">Student Dashboard</h1>
+            <p className="text-sm text-slate-500 mt-1">{studentName}</p>
+          </div>
           <button
-                            type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
-                        >
-                            View Seat Allocation
-                        </button>
-
-          <button
-                            type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
-                        >
-                            View Exam Schedule
-                        </button>
-
-          
-
-         <button
-                            type="submit"
-                            className="bg-linear-to-r from-blue-500 to-purple-500 hover:from blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:outline-shadow w-full"
-                        >
-                            View Profile
-                        
-                        </button>
-        </div>
-
-        {/* Logout */}
-        <div className="mt-8 text-right">
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-6 py-2 rounded-lg shadow hover:bg-red-600"
+            onClick={logout}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
           >
             Log out
           </button>
         </div>
 
-      </div>
-    </div>
+        <div className="grid md:grid-cols-2 gap-5 mt-6">
+          <button
+            onClick={() =>
+              router.push("/dashboards/studentdashboard/view_seat_allocation")
+            }
+            className="bg-white border border-slate-200 rounded-xl p-8 text-left hover:border-indigo-400 shadow-sm"
+          >
+            <h2 className="text-xl font-bold">View Seat Allocation</h2>
+            <p className="text-sm text-slate-500 mt-2">
+              See only your assigned hall, row, bench, and seat.
+            </p>
+          </button>
+
+          <button
+            onClick={() =>
+              router.push("/dashboards/studentdashboard/view_exam_routine")
+            }
+            className="bg-white border border-slate-200 rounded-xl p-8 text-left hover:border-emerald-400 shadow-sm"
+          >
+            <h2 className="text-xl font-bold">View Exam Routine</h2>
+            <p className="text-sm text-slate-500 mt-2">
+              Search exam routines by batch, subject, or code.
+            </p>
+          </button>
+        </div>
+      </section>
+    </main>
   );
 }
