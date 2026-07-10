@@ -52,6 +52,70 @@ app.include_router(allocation_router, prefix="/rooms")
 app.include_router(batches.router)
 app.include_router(seat_allocation_router)
 
+
+@app.on_event("startup")
+def ensure_schema():
+    """Create missing tables and migrate legacy admin username to email format."""
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS hall_invigilators (
+                    id SERIAL PRIMARY KEY,
+                    hall_id INT NOT NULL,
+                    teacher_user_id INT NOT NULL,
+                    exam_date TEXT NOT NULL,
+                    exam_time TEXT NOT NULL,
+                    UNIQUE (hall_id, exam_date, exam_time)
+                );
+                """
+            )
+
+            cursor.execute(
+                """
+                SELECT user_id
+                FROM users
+                WHERE username = 'admin'
+                AND role = 'admin';
+                """
+            )
+            legacy_admin = cursor.fetchone()
+
+            cursor.execute(
+                """
+                SELECT user_id
+                FROM users
+                WHERE LOWER(username) = LOWER('admin@ku.edu.np')
+                AND role = 'admin';
+                """
+            )
+            email_admin = cursor.fetchone()
+
+            if legacy_admin and not email_admin:
+                admin_temp_hash = bcrypt.hashpw(
+                    b"temporary_password",
+                    bcrypt.gensalt(),
+                ).decode("utf-8")
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET username = 'admin@ku.edu.np',
+                        password = %s,
+                        temporary_password = 'temporary_password',
+                        first_login = TRUE
+                    WHERE username = 'admin'
+                    AND role = 'admin';
+                    """,
+                    (admin_temp_hash,),
+                )
+
+            conn.commit()
+    except Exception as err:
+        print(f"Schema bootstrap skipped: {err}")
+
+
 @app.get("/api/students")
 def get_students():
     try:

@@ -22,6 +22,7 @@ def seed_database():
             user_id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
+            temporary_password TEXT,
             role TEXT NOT NULL,
             first_login BOOLEAN DEFAULT TRUE
         );
@@ -39,7 +40,7 @@ def seed_database():
         check_query = text("""
         SELECT COUNT(*)
         FROM users
-        WHERE username IN ('student','teacher','admin');
+        WHERE username IN ('student','teacher','admin@ku.edu.np');
         """)
 
         result = db.execute(check_query).fetchone()
@@ -58,8 +59,9 @@ def seed_database():
             bcrypt.gensalt()
         ).decode("utf-8")
 
+        admin_temp = "temporary_password"
         admin_password = bcrypt.hashpw(
-            "admin123".encode("utf-8"),
+            admin_temp.encode("utf-8"),
             bcrypt.gensalt()
         ).decode("utf-8")
 
@@ -68,13 +70,14 @@ def seed_database():
         (
             username,
             password,
+            temporary_password,
             role,
             first_login
         )
         VALUES
-            (:student_username,:student_password,'student',FALSE),
-            (:teacher_username,:teacher_password,'teacher',FALSE),
-            (:admin_username,:admin_password,'admin',FALSE)
+            (:student_username,:student_password,NULL,'student',FALSE),
+            (:teacher_username,:teacher_password,NULL,'teacher',FALSE),
+            (:admin_username,:admin_password,:admin_temp,'admin',TRUE)
         ON CONFLICT (username) DO NOTHING;
         """)
 
@@ -87,8 +90,9 @@ def seed_database():
                 "teacher_username": "teacher",
                 "teacher_password": teacher_password,
 
-                "admin_username": "admin",
+                "admin_username": "admin@ku.edu.np",
                 "admin_password": admin_password,
+                "admin_temp": admin_temp,
             },
         )
 
@@ -97,7 +101,7 @@ def seed_database():
         print("✓ Seeded default accounts")
         print("Student : student / student123")
         print("Teacher : teacher / teacher123")
-        print("Admin   : admin / admin123")
+        print("Admin   : admin@ku.edu.np / temporary_password")
 
     except Exception as e:
 

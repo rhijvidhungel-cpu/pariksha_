@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname(); 
 
   const [adminName, setAdminName] = useState<string>("Master Admin");
-  const [adminEmail, setAdminEmail] = useState<string>("root@ku.edu.np");
+  const [adminEmail, setAdminEmail] = useState<string>("admin@ku.edu.np");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
   useEffect(() => {
@@ -23,9 +23,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     setAdminName(name);
     setIsVerified(true);
-    
-    const email = localStorage.getItem("email");
-    if (email) setAdminEmail(email);
+
+    const email = localStorage.getItem("email") || name;
+    setAdminEmail(email);
   }, [pathname, router]); // Re-evaluate cleanly on route modifications
 
   // Evaluates which path tab highlights based on current URL location

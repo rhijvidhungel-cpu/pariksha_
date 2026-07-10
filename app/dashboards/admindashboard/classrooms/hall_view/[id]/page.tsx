@@ -1,471 +1,257 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 const API = "https://pariksha-9qjs.onrender.com";
 
-interface Session {
-  exam_date: string;
-  exam_time: string;
+interface Teacher {
+  user_id: number;
+  name: string;
+  email: string;
 }
 
-interface Allocation {
-  student_id: number;
-  full_name?: string | null;
-  batch_name: string;
-  subject_code: string;
-  subject_name?: string | null;
-  row_no: number;
-  bench_no: number;
-  seat_no: number;
-}
-
-interface Hall {
-  hall_id: number;
-  room_no: string;
-  capacity: number;
-  physical_capacity: number;
-  usable_capacity: number;
-  allocated: number;
-  remaining: number;
-  rows_count: number;
-  benches_per_row: number;
-  seats_per_bench: number;
-  exam_date: string;
-  exam_time: string;
-  allocations: Allocation[];
-}
-
-export default function HallView() {
+export default function AdminHallView() {
   const params = useParams();
   const roomId = params.id;
-
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState("");
-  const [hall, setHall] = useState<Hall | null>(null);
+  const [hall, setHall] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+  const [assignedTeacher, setAssignedTeacher] = useState<any>(null);
+  const [savingInvigilator, setSavingInvigilator] = useState(false);
 
-  const loadSessions = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/api/routines/sessions`);
-      const data = await res.json();
-
-      setSessions(Array.isArray(data) ? data : []);
-
-      if (Array.isArray(data) && data.length > 0) {
-        setSelectedSession(`${data[0].exam_date}|${data[0].exam_time}`);
-      }
-    } catch (err) {
-      console.error(err);
-      setSessions([]);
-      setLoading(false);
-    }
+  useEffect(() => {
+    loadSessions();
+    loadTeachers();
   }, []);
 
-  const fetchHall = useCallback(async () => {
+  useEffect(() => {
     if (!roomId || !selectedSession) return;
+    loadHall();
+    loadInvigilator();
+  }, [roomId, selectedSession]);
 
-    const [date, time] = selectedSession.split("|");
+  async function loadSessions() {
+    const res = await fetch(`${API}/api/routines/sessions`);
+    const data = await res.json();
+    setSessions(Array.isArray(data) ? data : []);
+    if (Array.isArray(data) && data.length > 0) {
+      setSelectedSession(`${data[0].exam_date}|${data[0].exam_time}`);
+    }
+  }
 
+  async function loadTeachers() {
     try {
-      setLoading(true);
+      const res = await fetch(`${API}/api/dashboards/admindashboard/teachers`);
+      const data = await res.json();
+      setTeachers(Array.isArray(data) ? data : []);
+    } catch {
+      setTeachers([]);
+    }
+  }
 
+  async function loadHall() {
+    const [date, time] = selectedSession.split("|");
+    setLoading(true);
+    try {
       const res = await fetch(
         `${API}/api/seat-allocation/hall/${roomId}?exam_date=${encodeURIComponent(
           date
         )}&exam_time=${encodeURIComponent(time)}`
       );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Failed to load hall allocation.");
-      }
-
-      setHall(data);
-    } catch (err) {
-      console.error(err);
-      setHall(null);
+      setHall(await res.json());
     } finally {
       setLoading(false);
     }
-  }, [roomId, selectedSession]);
+  }
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      void loadSessions();
-    });
-  }, [loadSessions]);
+  async function loadInvigilator() {
+    const [date, time] = selectedSession.split("|");
+    try {
+      const res = await fetch(
+        `${API}/api/seat-allocation/invigilator?hall_id=${roomId}&exam_date=${encodeURIComponent(
+          date
+        )}&exam_time=${encodeURIComponent(time)}`
+      );
+      const data = await res.json();
+      setAssignedTeacher(data?.teacher_user_id ? data : null);
+      setSelectedTeacherId(data?.teacher_user_id ? String(data.teacher_user_id) : "");
+    } catch {
+      setAssignedTeacher(null);
+      setSelectedTeacherId("");
+    }
+  }
 
-  useEffect(() => {
-    if (!roomId || !selectedSession) return;
+  async function saveInvigilator() {
+    if (!selectedTeacherId) {
+      alert("Select a teacher to assign as invigilator.");
+      return;
+    }
 
-    queueMicrotask(() => {
-      void fetchHall();
-    });
-  }, [fetchHall, roomId, selectedSession]);
+    const [date, time] = selectedSession.split("|");
+    setSavingInvigilator(true);
+    try {
+      const res = await fetch(`${API}/api/seat-allocation/invigilator`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hall_id: Number(roomId),
+          exam_date: date,
+          exam_time: time,
+          teacher_user_id: Number(selectedTeacherId),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to assign invigilator.");
+      await loadInvigilator();
+      alert("Invigilator assigned successfully.");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to assign invigilator.");
+    } finally {
+      setSavingInvigilator(false);
+    }
+  }
 
   const seatMap = useMemo(() => {
-    const map = new Map<string, Allocation>();
-
-    hall?.allocations?.forEach((allocation) => {
+    const map = new Map<string, any>();
+    hall?.allocations?.forEach((allocation: any) => {
       map.set(
         `${allocation.row_no}-${allocation.bench_no}-${allocation.seat_no}`,
         allocation
       );
     });
-
     return map;
   }, [hall]);
 
-  const attendanceRows = useMemo(() => {
-    return [...(hall?.allocations || [])].sort((a, b) => {
-      if (a.row_no !== b.row_no) return a.row_no - b.row_no;
-      if (a.bench_no !== b.bench_no) return a.bench_no - b.bench_no;
-      return a.seat_no - b.seat_no;
-    });
-  }, [hall]);
-
-  function generateAttendanceSheet() {
-    if (!hall || attendanceRows.length === 0) {
-      alert("No allocated students found for this hall and session.");
-      return;
-    }
-
-    window.print();
-  }
-
-  if (!roomId) return <div style={{ padding: "30px" }}>Invalid Room ID</div>;
+  if (!roomId) return <div className="p-8 text-black">Invalid Room ID</div>;
 
   return (
-    <div style={{ padding: "30px", color: "black" }}>
-      <style>{`
-        .attendance-print-sheet {
-          display: none;
-        }
-
-        @media print {
-          body {
-            background: white !important;
-          }
-
-          .hall-screen-view {
-            display: none !important;
-          }
-
-          .attendance-print-sheet {
-            display: block !important;
-            color: black;
-            font-family: Arial, sans-serif;
-          }
-
-          .attendance-print-sheet table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 18px;
-            font-size: 12px;
-          }
-
-          .attendance-print-sheet th,
-          .attendance-print-sheet td {
-            border: 1px solid #111;
-            padding: 8px;
-            text-align: left;
-            vertical-align: middle;
-          }
-
-          .attendance-print-sheet th {
-            font-weight: 800;
-            background: #f3f4f6;
-          }
-
-          .attendance-print-sheet .signature-cell {
-            height: 34px;
-          }
-
-          @page {
-            size: A4;
-            margin: 14mm;
-          }
-        }
-      `}</style>
-
-      <div className="hall-screen-view">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          gap: "20px",
-          marginBottom: "24px",
-        }}
+    <main className="p-8 text-black bg-slate-100 min-h-screen">
+      <Link
+        href="/dashboards/admindashboard/classrooms"
+        className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 mb-4"
       >
-        <div>
-          <h2
-            style={{
-              fontSize: "22px",
-              fontWeight: "800",
-              marginBottom: "8px",
-            }}
-          >
-            Room: {hall?.room_no || roomId}
-          </h2>
+        ← Back to Classrooms
+      </Link>
 
-          {hall && (
-            <div style={{ color: "#4b5563", fontWeight: 600 }}>
-              Allocated: {hall.allocated} | Remaining: {hall.remaining} |
-              Usable seats: {hall.usable_capacity}
-            </div>
-          )}
-        </div>
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-extrabold">
+              Room: {hall?.room_no || roomId}
+            </h1>
+            {hall && (
+              <p className="text-sm text-slate-500 mt-1">
+                Allocated {hall.allocated} | Remaining {hall.remaining} | Usable{" "}
+                {hall.usable_capacity}
+              </p>
+            )}
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontWeight: 700,
-              marginBottom: "8px",
-            }}
-          >
-            Exam Session
-          </label>
-          <select
-            value={selectedSession}
-            onChange={(event) => setSelectedSession(event.target.value)}
-            style={{
-              minWidth: "260px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              padding: "10px",
-              color: "black",
-              background: "white",
-            }}
-          >
-            {sessions.map((session, index) => (
-              <option
-                key={index}
-                value={`${session.exam_date}|${session.exam_time}`}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2">
+                Exam Session
+              </label>
+              <select
+                value={selectedSession}
+                onChange={(event) => setSelectedSession(event.target.value)}
+                className="border border-slate-300 rounded-lg px-4 py-3 text-sm bg-white min-w-[220px]"
               >
-                {session.exam_date} | {session.exam_time}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {loading ? (
-        <div>Loading...</div>
-      ) : !hall ? (
-        <div>No allocation data found for this room and session.</div>
-      ) : (
-        <>
-          {hall.capacity !== hall.usable_capacity && (
-            <div
-              style={{
-                marginBottom: "20px",
-                padding: "12px 14px",
-                border: "1px solid #f59e0b",
-                borderRadius: "8px",
-                background: "#fffbeb",
-                color: "#92400e",
-                fontWeight: 700,
-              }}
-            >
-              Room capacity is {hall.capacity}, but the physical layout creates
-              only {hall.physical_capacity} seats. Allocation uses{" "}
-              {hall.usable_capacity} usable seats.
-            </div>
-          )}
-
-          {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
-            <div
-              key={rowIndex}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "20px",
-                marginBottom: "25px",
-              }}
-            >
-              <div
-                style={{
-                  width: "80px",
-                  fontWeight: "700",
-                }}
-              >
-                Row {rowIndex + 1}
-              </div>
-
-              {Array.from({ length: hall.benches_per_row }).map(
-                (_, benchIndex) => (
-                  <div
-                    key={benchIndex}
-                    style={{
-                      display: "flex",
-                      border: "2px solid black",
-                      padding: "18px",
-                      borderRadius: "10px",
-                      backgroundColor: "#fff",
-                      minWidth: "120px",
-                    }}
+                {sessions.map((session, index) => (
+                  <option
+                    key={index}
+                    value={`${session.exam_date}|${session.exam_time}`}
                   >
-                    {Array.from({ length: hall.seats_per_bench }).map(
-                      (_, seatIndex) => {
-                        const allocation = seatMap.get(
-                          `${rowIndex + 1}-${benchIndex + 1}-${seatIndex + 1}`
-                        );
+                    {session.exam_date} | {session.exam_time}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                        return (
-                          <div
-                            key={seatIndex}
-                            style={{
-                              width: "110px",
-                              minHeight: "85px",
-                              border: "2px solid black",
-                              margin: "0 5px",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "10px",
-                              fontWeight: "700",
-                              color: "black",
-                              backgroundColor: allocation
-                                ? "#d1fae5"
-                                : "#f5f5f5",
-                              padding: "4px",
-                            }}
-                          >
-                            {allocation ? (
-                              <>
-                                <div>
-                                  <b>ID:</b> {allocation.student_id}
-                                </div>
-                                <div>
-                                  <b>Batch:</b> {allocation.batch_name}
-                                </div>
-                                <div>
-                                  <b>Sub:</b> {allocation.subject_code}
-                                </div>
-                                <div>
-                                  <b>Seat:</b> S{allocation.seat_no}
-                                </div>
-                              </>
-                            ) : (
-                              <>S{seatIndex + 1}</>
-                            )}
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-                )
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2">
+                Assign Invigilator
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedTeacherId}
+                  onChange={(event) => setSelectedTeacherId(event.target.value)}
+                  className="border border-slate-300 rounded-lg px-4 py-3 text-sm bg-white min-w-[200px]"
+                >
+                  <option value="">Select teacher</option>
+                  {teachers.map((teacher) => (
+                    <option key={teacher.user_id} value={teacher.user_id}>
+                      {teacher.name} ({teacher.email})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={saveInvigilator}
+                  disabled={savingInvigilator}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white rounded-lg px-4 py-3 text-sm font-bold whitespace-nowrap"
+                >
+                  {savingInvigilator ? "Saving..." : "Save"}
+                </button>
+              </div>
+              {assignedTeacher?.full_name && (
+                <p className="text-xs text-emerald-700 font-semibold mt-2">
+                  Current invigilator: {assignedTeacher.full_name} ({assignedTeacher.email})
+                </p>
               )}
             </div>
-          ))}
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: "28px",
-              paddingBottom: "12px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={generateAttendanceSheet}
-              disabled={!hall || attendanceRows.length === 0}
-              style={{
-                border: "none",
-                borderRadius: "10px",
-                background:
-                  !hall || attendanceRows.length === 0 ? "#9ca3af" : "#111827",
-                color: "white",
-                cursor:
-                  !hall || attendanceRows.length === 0 ? "not-allowed" : "pointer",
-                fontWeight: 800,
-                padding: "13px 18px",
-                boxShadow: "0 10px 25px rgba(17, 24, 39, 0.18)",
-              }}
-            >
-              Generate Attendance Sheet
-            </button>
-          </div>
-        </>
-      )}
-      </div>
-
-      {hall && (
-        <div className="attendance-print-sheet">
-          <div style={{ textAlign: "center", marginBottom: "18px" }}>
-            <h1 style={{ fontSize: "22px", margin: 0, fontWeight: 800 }}>
-              Attendance Sheet
-            </h1>
-            <div style={{ marginTop: "8px", fontSize: "13px", fontWeight: 700 }}>
-              Exam Date: {hall.exam_date} | Exam Time: {hall.exam_time}
-            </div>
-            <div style={{ marginTop: "4px", fontSize: "13px", fontWeight: 700 }}>
-              Hall: {hall.room_no} | Allocated Students: {hall.allocated}
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: "42px" }}>S.N.</th>
-                <th>Student ID</th>
-                <th>Student Name</th>
-                <th>Batch</th>
-                <th>Subject</th>
-                <th>Seat</th>
-                <th style={{ width: "145px" }}>Signature</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceRows.map((allocation, index) => (
-                <tr key={`${allocation.row_no}-${allocation.bench_no}-${allocation.seat_no}`}>
-                  <td>{index + 1}</td>
-                  <td>{allocation.student_id}</td>
-                  <td>{allocation.full_name || ""}</td>
-                  <td>{allocation.batch_name}</td>
-                  <td>
-                    {allocation.subject_code}
-                    {allocation.subject_name ? ` - ${allocation.subject_name}` : ""}
-                  </td>
-                  <td>
-                    R{allocation.row_no}-B{allocation.bench_no}-S{allocation.seat_no}
-                  </td>
-                  <td className="signature-cell"></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "48px",
-              marginTop: "52px",
-              fontSize: "13px",
-              fontWeight: 700,
-            }}
-          >
-            <div>
-              <div style={{ borderTop: "1px solid #111", paddingTop: "8px" }}>
-                Invigilator Signature
-              </div>
-            </div>
-            <div>
-              <div style={{ borderTop: "1px solid #111", paddingTop: "8px" }}>
-                Exam Coordinator Signature
-              </div>
-            </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {loading ? (
+          <div className="text-slate-400">Loading hall...</div>
+        ) : hall ? (
+          <div className="overflow-auto">
+            {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
+              <div key={rowIndex} className="flex items-center gap-5 mb-6">
+                <div className="w-20 font-bold">Row {rowIndex + 1}</div>
+                {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
+                  <div
+                    key={benchIndex}
+                    className="flex border-2 border-black rounded-lg p-4 bg-white"
+                  >
+                    {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
+                      const allocation = seatMap.get(
+                        `${rowIndex + 1}-${benchIndex + 1}-${seatIndex + 1}`
+                      );
+                      return (
+                        <div
+                          key={seatIndex}
+                          className={`w-28 min-h-24 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
+                            allocation ? "bg-emerald-100 border-emerald-700" : "bg-slate-100 border-slate-300"
+                          }`}
+                        >
+                          {allocation ? (
+                            <>
+                              <div>{allocation.full_name || allocation.student_id}</div>
+                              <div>{allocation.batch_name}</div>
+                              <div>{allocation.subject_code}</div>
+                              <div>S{allocation.seat_no}</div>
+                            </>
+                          ) : (
+                            <>S{seatIndex + 1}</>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-slate-400">No hall data found.</div>
+        )}
+      </section>
+    </main>
   );
 }

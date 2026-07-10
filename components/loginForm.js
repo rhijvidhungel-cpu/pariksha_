@@ -30,6 +30,9 @@ const LoginForm = () => {
                     localStorage.setItem("user_id", data.user_id);
                     localStorage.setItem("username", data.username);
                     localStorage.setItem("role", data.role);
+                    if (data.email || data.role === "admin") {
+                        localStorage.setItem("email", data.email || data.username);
+                    }
                 }
                 if (data.first_login) {
                     router.push("/change-password");
@@ -68,11 +71,14 @@ const LoginForm = () => {
             return;
         }
 
-        if (username === "admin" && password === "admin123") {
-            localStorage.setItem("username", "admin");
-            localStorage.setItem("role", "admin");
-            router.push("/dashboards/admindashboard");
-            return;
+        if (username === "admin@ku.edu.np" || username === "admin") {
+            if (password === "temporary_password" || password === "admin123") {
+                localStorage.setItem("username", "admin@ku.edu.np");
+                localStorage.setItem("email", "admin@ku.edu.np");
+                localStorage.setItem("role", "admin");
+                router.push("/dashboards/admindashboard");
+                return;
+            }
         }
 
         alert("Invalid credentials. Try: student/student123, teacher/teacher123, admin/admin123");
@@ -144,8 +150,13 @@ const LoginForm = () => {
                         </div>
 
                         <div style={styles.supportLinkCenter}>
-                            <Link href="/contact-admin" style={styles.forgotPassLink}>
+                            <Link href="/forgot-password" style={styles.forgotPassLink}>
                                 Forgot Password?
+                            </Link>
+                        </div>
+                        <div style={styles.adminLinkCenter}>
+                            <Link href="/forgot-admin-password" style={styles.adminForgotLink}>
+                                Forgot password for admin?
                             </Link>
                         </div>
                     </form>
@@ -269,11 +280,21 @@ const styles = {
         textAlign: "center",
         marginTop: "20px",
     },
+    adminLinkCenter: {
+        textAlign: "center",
+        marginTop: "10px",
+    },
     forgotPassLink: {
         color: "#6B7280",
         fontSize: "13px",
         textDecoration: "none",
         fontWeight: 500,
+    },
+    adminForgotLink: {
+        color: "#4F46E5",
+        fontSize: "12px",
+        textDecoration: "none",
+        fontWeight: 600,
     },
 };
 

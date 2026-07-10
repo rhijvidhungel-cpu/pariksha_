@@ -13,7 +13,48 @@ router = APIRouter(
 
 
 # ----------------------------
-# GET ROUTINE
+# GET ALL ROUTINES (teacher/student dashboards)
+# ----------------------------
+@router.get("/all")
+async def get_all_routines():
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+                    batch_name,
+                    exam_date,
+                    exam_time,
+                    subject_name,
+                    subject_code
+                FROM exam_routines
+                ORDER BY batch_name ASC, exam_date ASC, exam_time ASC;
+                """
+            )
+
+            records = cursor.fetchall()
+            results = []
+
+            for row in records:
+                results.append({
+                    "batch_name": row["batch_name"],
+                    "exam_date": str(row["exam_date"]),
+                    "exam_time": row["exam_time"] or "",
+                    "subject_name": row["subject_name"],
+                    "subject_code": row["subject_code"],
+                })
+
+            return results
+
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ----------------------------
+# GET ROUTINE BY BATCH
 # ----------------------------
 @router.get("")
 async def get_routines(batch: str):

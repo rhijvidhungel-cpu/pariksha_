@@ -128,11 +128,11 @@ def create_teacher(teacher: TeacherSchema):
 
             cursor.execute(
                 """
-                INSERT INTO users (username, password, role, first_login)
-                VALUES (%s, %s, 'teacher', TRUE)
+                INSERT INTO users (username, password, temporary_password, role, first_login)
+                VALUES (%s, %s, %s, 'teacher', TRUE)
                 RETURNING user_id;
                 """,
-                (clean_email, hashed_password),
+                (clean_email, hashed_password, teacher_password),
             )
             user_id = safe_get_field(cursor.fetchone(), "user_id", 0)
 

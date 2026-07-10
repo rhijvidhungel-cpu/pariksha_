@@ -20,6 +20,28 @@ class AllocationRequest(BaseModel):
     rooms: List[int]
 
 
+class InvigilatorRequest(BaseModel):
+    hall_id: int
+    exam_date: str
+    exam_time: str
+    teacher_user_id: int
+
+
+def ensure_invigilator_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS hall_invigilators (
+            id SERIAL PRIMARY KEY,
+            hall_id INT NOT NULL,
+            teacher_user_id INT NOT NULL,
+            exam_date TEXT NOT NULL,
+            exam_time TEXT NOT NULL,
+            UNIQUE (hall_id, exam_date, exam_time)
+        );
+        """
+    )
+
+
 def placeholders(values):
     return ",".join(["%s"] * len(values))
 
@@ -643,5 +665,151 @@ def get_hall_allocation(hall_id: int, exam_date: str, exam_time: str):
 
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/invigilator")
+def assign_invigilator(data: InvigilatorRequest):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            ensure_invigilator_table(cursor)
+
+            cursor.execute(
+                """
+                INSERT INTO hall_invigilators
+                (hall_id, teacher_user_id, exam_date, exam_time)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (hall_id, exam_date, exam_time)
+                DO UPDATE SET teacher_user_id = EXCLUDED.teacher_user_id;
+                """,
+                (
+                    data.hall_id,
+                    data.teacher_user_id,
+                    data.exam_date,
+                    data.exam_time,
+                ),
+            )
+            conn.commit()
+            return {"success": True, "message": "Invigilator assigned."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/invigilator")
+def get_invigilator(hall_id: int, exam_date: str, exam_time: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            ensure_invigilator_table(cursor)
+
+            cursor.execute(
+                """
+                SELECT
+                    hi.teacher_user_id,
+                    t.full_name,
+                    u.username AS email
+                FROM hall_invigilators hi
+                LEFT JOIN users u ON u.user_id = hi.teacher_user_id
+                LEFT JOIN teachers t ON t.user_id = hi.teacher_user_id
+                WHERE hi.hall_id = %s
+                AND hi.exam_date = %s
+                AND hi.exam_time = %s;
+                """,
+                (hall_id, exam_date, exam_time),
+            )
+            row = cursor.fetchone()
+            return row or {}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/teacher/{user_id}")
+def get_teacher_assignments(user_id: int):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+            ensure_invigilator_table(cursor)
+
+            cursor.execute(
+                """
+                SELECT
+                    hi.hall_id,
+                    hi.exam_date,
+                    hi.exam_time,
+                    eh.room_no
+                FROM hall_invigilators hi
+                JOIN exam_halls eh ON eh.hall_id = hi.hall_id
+                WHERE hi.teacher_user_id = %s
+                ORDER BY hi.exam_date, hi.exam_time, eh.room_no;
+                """,
+                (user_id,),
+            )
+            return cursor.fetchall()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/student/{user_id}")
+def get_student_allocations(user_id: int):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+                    sa.exam_date,
+                    sa.exam_time,
+                    sa.room_no,
+                    sa.row_no,
+                    sa.bench_no,
+                    sa.seat_no,
+                    sa.subject_name,
+                    sa.subject_code,
+                    sa.batch_name
+                FROM seat_allocations sa
+                JOIN students s ON s.student_id = sa.student_id
+                WHERE s.user_id = %s
+                ORDER BY sa.exam_date, sa.exam_time;
+                """,
+                (user_id,),
+            )
+            return cursor.fetchall()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/attendance")
+def get_attendance_sheet(hall_id: int, exam_date: str, exam_time: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+                    sa.student_id,
+                    s.full_name,
+                    sa.batch_name,
+                    sa.row_no,
+                    sa.bench_no,
+                    sa.seat_no
+                FROM seat_allocations sa
+                LEFT JOIN students s ON s.student_id = sa.student_id
+                WHERE sa.hall_id = %s
+                AND sa.exam_date = %s
+                AND sa.exam_time = %s
+                ORDER BY sa.row_no, sa.bench_no, sa.seat_no;
+                """,
+                (hall_id, exam_date, exam_time),
+            )
+            return cursor.fetchall()
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
