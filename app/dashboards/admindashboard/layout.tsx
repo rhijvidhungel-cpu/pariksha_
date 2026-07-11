@@ -111,16 +111,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (found) {
         const name = found.name || found.full_name || "Unknown";
         const roll = found.roll || found.username || "N/A";
-        const batch = found.batch || "N/A";
-        targetLabel = `${name} (${roll}) - ${batch}`;
+        targetLabel = `${name} (${roll})`;
       }
     } else if (notif.type === "single_teacher") {
       const found = teachers.find((t: any) => String(t.user_id) === String(notif.target_id));
       if (found) {
         const name = found.name || "Unknown";
         const email = found.email || "N/A";
-        const dept = found.department || "N/A";
-        targetLabel = `${name} (${email}) - ${dept}`;
+        targetLabel = `${name} (${email})`;
       }
     }
 
