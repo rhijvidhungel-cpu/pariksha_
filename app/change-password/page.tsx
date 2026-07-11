@@ -61,25 +61,25 @@ export default function ChangePasswordPage() {
           Enter your current password and choose a new password.
         </p>
 
-        <label className="block text-xs font-bold text-[#6B7280] mt-6 mb-2">
+        <label className="block text-xs font-bold text-[#374151] mt-6 mb-2">
           Current Password
         </label>
         <input
           type="password"
           value={oldPassword}
           onChange={(event) => setOldPassword(event.target.value)}
-          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
+          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm text-[#111827] font-medium outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
           required
         />
 
-        <label className="block text-xs font-bold text-[#6B7280] mt-4 mb-2">
+        <label className="block text-xs font-bold text-[#374151] mt-4 mb-2">
           New Password
         </label>
         <input
           type="password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
+          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm text-[#111827] font-medium outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
           required
         />
 

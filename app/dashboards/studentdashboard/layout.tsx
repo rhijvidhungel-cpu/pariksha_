@@ -144,7 +144,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                       <div key={idx} className="p-3 border-b border-slate-50 hover:bg-slate-50">
                         <p className="text-xs text-[#4F46E5] font-semibold uppercase">{notif.type || "Notice"}</p>
                         <p className="text-sm text-[#111827] mt-1">{notif.message}</p>
-                        <p className="text-[10px] text-[#9CA3AF] mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString() : ""}</p>
+                        <p className="text-[10px] text-[#9CA3AF] mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString("en-US", { timeZone: "Asia/Katmandu" }) : ""}</p>
                       </div>
                     ))
                   ) : (

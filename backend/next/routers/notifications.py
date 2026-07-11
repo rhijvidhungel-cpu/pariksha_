@@ -169,8 +169,8 @@ def send_notification(data: NotificationSend):
 
             cursor.execute(
                 """
-                INSERT INTO notifications (type, message, target_id)
-                VALUES (%s, %s, %s);
+                INSERT INTO notifications (type, message, target_id, created_at)
+                VALUES (%s, %s, %s, (NOW() AT TIME ZONE 'Asia/Katmandu')::timestamp WITHOUT TIME ZONE);
                 """,
                 (data.type, data.message, data.target_id),
             )

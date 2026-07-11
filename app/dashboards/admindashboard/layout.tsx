@@ -104,14 +104,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   function getTargetLabel(notif: any): string {
+    // Resolve student/teacher IDs to usernames
+    let targetLabel = notif.target_id || "N/A";
+    if (notif.type === "single_student") {
+      const found = students.find((s: any) => String(s.sn || s.student_id) === String(notif.target_id));
+      if (found) targetLabel = found.name || found.full_name || targetLabel;
+    } else if (notif.type === "single_teacher") {
+      const found = teachers.find((t: any) => String(t.user_id) === String(notif.target_id));
+      if (found) targetLabel = found.name || targetLabel;
+    }
+
     const typeLabels: Record<string, string> = {
       "all_students": "All Students",
       "all_teachers": "All Teachers",
       "batch_students": `Batch: ${notif.target_id || "N/A"}`,
       "department_students": `Dept (Students): ${notif.target_id || "N/A"}`,
       "department_teachers": `Dept (Teachers): ${notif.target_id || "N/A"}`,
-      "single_student": `Student ID: ${notif.target_id || "N/A"}`,
-      "single_teacher": `Teacher ID: ${notif.target_id || "N/A"}`,
+      "single_student": `Student: ${targetLabel}`,
+      "single_teacher": `Teacher: ${targetLabel}`,
     };
     return typeLabels[notif.type] || notif.type || "Notice";
   }
@@ -175,12 +185,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }, [teachers, teacherSearch]);
 
-  // Format date/time nicely
+  // Format date/time nicely in Nepal Time (Asia/Katmandu)
   function formatDateTime(dateStr: string): string {
     if (!dateStr) return "";
     try {
       const d = new Date(dateStr);
       return d.toLocaleDateString("en-US", {
+        timeZone: "Asia/Katmandu",
         year: "numeric", month: "short", day: "numeric",
         hour: "2-digit", minute: "2-digit", second: "2-digit",
         hour12: true
