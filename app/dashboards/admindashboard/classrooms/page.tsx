@@ -398,17 +398,6 @@ onClick={() =>
                       isSelected ? "border-indigo-600 ring-2 ring-indigo-100" : "border-gray-200"
                     }`}
                   >
-                    {/* Status Badge */}
-                    <div className="absolute top-4 right-4 flex items-center gap-2">
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase ${
-                        room.status === "Full"
-                          ? "bg-rose-50 border-rose-200 text-rose-700"
-                          : "bg-blue-50 border-blue-200 text-blue-700"
-                      }`}>
-                        {room.status}
-                      </span>
-                    </div>
-
                     <div>
                       <h3 className="font-bold text-gray-900 text-base mb-1 truncate pr-20">{room.name}</h3>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 font-medium">
