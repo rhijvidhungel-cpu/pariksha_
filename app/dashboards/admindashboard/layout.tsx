@@ -111,7 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         message: notifMessage,
       };
       if (notifTargetId) {
-        payload.target_id = parseInt(notifTargetId);
+        payload.target_id = notifTargetId;
       }
       const res = await fetch("https://pariksha-9qjs.onrender.com/api/notifications/send", {
         method: "POST",
@@ -306,11 +306,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Send To</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Send To</label>
                 <select
                   value={notifType}
                   onChange={(e) => { setNotifType(e.target.value); setNotifTargetId(""); }}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                  className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                 >
                   <option value="all_students">All Students</option>
                   <option value="all_teachers">All Teachers</option>
@@ -324,11 +324,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               {(notifType === "batch_students") && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Batch</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Select Batch</label>
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                    className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="">Select a batch</option>
                     {batches.map((b: string) => (
@@ -340,11 +340,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               {(notifType === "department_students" || notifType === "department_teachers") && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Department</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Select Department</label>
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                    className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="">Select a department</option>
                     {departments.map((d: string) => (
@@ -356,15 +356,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               {notifType === "single_student" && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Student</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Select Student</label>
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                    className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="">Select a student</option>
                     {students.map((s: any) => (
-                      <option key={s.sn || s.student_id} value={s.sn || s.student_id}>
+                      <option key={s.sn || s.student_id} value={String(s.sn || s.student_id)}>
                         {s.name || s.full_name} ({s.roll || s.username})
                       </option>
                     ))}
@@ -374,28 +374,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               {notifType === "single_teacher" && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Teacher</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Select Teacher</label>
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                    className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="">Select a teacher</option>
                     {teachers.map((t: any) => (
-                      <option key={t.user_id} value={t.user_id}>{t.name} ({t.email})</option>
+                      <option key={t.user_id} value={String(t.user_id)}>{t.name} ({t.email})</option>
                     ))}
                   </select>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Message</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Message</label>
                 <textarea
                   value={notifMessage}
                   onChange={(e) => setNotifMessage(e.target.value)}
                   placeholder="Type your notification message here..."
                   rows={4}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500 resize-none"
+                  className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500 resize-none"
                 />
               </div>
 

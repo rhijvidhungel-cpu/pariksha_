@@ -31,8 +31,6 @@ export default function StudentExamRoutinePage() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [studentBatch, setStudentBatch] = useState<string>("");
-  const [uploadNames, setUploadNames] = useState<string[]>([]);
-  const [selectedUpload, setSelectedUpload] = useState<string>("");
 
   useEffect(() => {
     const userId = localStorage.getItem("user_id");
@@ -62,11 +60,6 @@ export default function StudentExamRoutinePage() {
       const res = await fetch(`${API}/api/routines/all`);
       const data = await res.json();
       const allRoutines = Array.isArray(data) ? data : [];
-      
-      // Get unique batch upload names
-      const batches = [...new Set(allRoutines.map((r: Routine) => r.batch_name))] as string[];
-      setUploadNames(batches);
-      
       setRoutines(allRoutines);
     } catch (err) {
       console.error(err);
@@ -82,13 +75,7 @@ export default function StudentExamRoutinePage() {
     return routines.filter(r => r.batch_name === studentBatch);
   }, [routines, studentBatch]);
 
-  // Also filter by selected upload if one is chosen
-  const filteredRoutines = useMemo(() => {
-    if (!selectedUpload) return myBatchRoutines;
-    return myBatchRoutines.filter(r => r.batch_name === selectedUpload);
-  }, [myBatchRoutines, selectedUpload]);
-
-  const sessions = useMemo(() => groupBySession(filteredRoutines), [filteredRoutines]);
+  const sessions = useMemo(() => groupBySession(myBatchRoutines), [myBatchRoutines]);
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#111827]">
@@ -98,31 +85,6 @@ export default function StudentExamRoutinePage() {
           <p className="text-sm text-[#6B7280] mt-1">
             {studentBatch ? `Showing routine for batch: ${studentBatch}` : "Loading your batch..."}
           </p>
-
-          {/* Upload filter tabs */}
-          {uploadNames.length > 1 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedUpload("")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
-                  !selectedUpload ? "bg-[#4F46E5] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
-                }`}
-              >
-                My Batch ({studentBatch})
-              </button>
-              {uploadNames.filter(b => b !== studentBatch).map(batch => (
-                <button
-                  key={batch}
-                  onClick={() => setSelectedUpload(batch)}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
-                    selectedUpload === batch ? "bg-[#4F46E5] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
-                  }`}
-                >
-                  {batch}
-                </button>
-              ))}
-            </div>
-          )}
 
           {loading ? (
             <div className="mt-6 text-[#9CA3AF]">Loading routine...</div>

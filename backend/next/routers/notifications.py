@@ -12,7 +12,7 @@ router = APIRouter(
 class NotificationSend(BaseModel):
     type: str
     message: str
-    target_id: Optional[int] = None
+    target_id: Optional[str] = None
 
 
 @router.get("")
@@ -65,9 +65,9 @@ def get_student_notifications(user_id: int):
                 FROM notifications
                 WHERE
                     type = 'all_students'
-                    OR (type = 'single_student' AND target_id = %s)
-                    OR (type = 'batch_students' AND target_id = %s::text::int)
-                    OR (type = 'department_students' AND target_id = %s::text::int)
+                    OR (type = 'single_student' AND target_id = %s::varchar)
+                    OR (type = 'batch_students' AND target_id = %s)
+                    OR (type = 'department_students' AND target_id = %s)
                 ORDER BY created_at DESC
                 LIMIT 20;
                 """,
@@ -104,8 +104,8 @@ def get_teacher_notifications(user_id: int):
                 FROM notifications
                 WHERE
                     type = 'all_teachers'
-                    OR (type = 'single_teacher' AND target_id = %s)
-                    OR (type = 'department_teachers' AND target_id = %s::text::int)
+                    OR (type = 'single_teacher' AND target_id = %s::varchar)
+                    OR (type = 'department_teachers' AND target_id = %s)
                 ORDER BY created_at DESC
                 LIMIT 20;
                 """,
@@ -130,7 +130,7 @@ def send_notification(data: NotificationSend):
                     id SERIAL PRIMARY KEY,
                     type TEXT NOT NULL,
                     message TEXT NOT NULL,
-                    target_id INTEGER,
+                    target_id TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
                 """

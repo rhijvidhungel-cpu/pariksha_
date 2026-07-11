@@ -436,19 +436,11 @@ onClick={() =>
                       </div>
                     </div>
 
-                    {/* Occupancy Progress */}
+                    {/* Capacity Info (total seats only) */}
                     <div className="flex flex-col gap-1">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500 font-semibold">Seat Occupancy</span>
-                        <span className="font-mono font-bold text-gray-900">{`${room.allocatedStudentsCount} / ${room.capacity} (${percent}%)`}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            room.status === "Full" ? "bg-rose-500" : "bg-indigo-600"
-                          }`}
-                          style={{ width: `${percent}%` }}
-                        />
+                        <span className="text-gray-500 font-semibold">Total Seats</span>
+                        <span className="font-mono font-bold text-gray-900">{room.capacity} seats</span>
                       </div>
                     </div>
 
