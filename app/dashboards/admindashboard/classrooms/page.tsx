@@ -346,24 +346,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
           >
             + Create New Room
           </button>
-          
-          <button
-            onClick={handleAutoAllocate}
-            disabled={allocating || rooms.length === 0}
-            className="bg-indigo-600 text-white text-xs font-bold px-5 py-3 rounded-xl hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors shadow-md shadow-indigo-100 flex items-center gap-2 cursor-pointer"
-          >
-            {allocating ? (
-              <>
-                <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Allocating...
-              </>
-            ) : (
-              "⚡ Run Auto-Allocation"
-            )}
-          </button>
         </div>
       </div>
 
