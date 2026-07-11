@@ -364,7 +364,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   >
                     <option value="">Select a student</option>
                     {students.map((s: any) => (
-                      <option key={s.sn || s.student_id} value={String(s.sn || s.student_id)}>
+                      <option
+                      key={s.user_id}
+                      value={String(s.user_id)}
+                  >
                         {s.name || s.full_name} ({s.roll || s.username})
                       </option>
                     ))}

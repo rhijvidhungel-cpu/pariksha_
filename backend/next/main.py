@@ -124,16 +124,17 @@ def get_students():
         with get_raw_db() as conn:
             cursor = conn.cursor()
             query = """
-                SELECT 
-                    s.student_id AS sn,
-                    s.full_name AS name,
-                    u.username AS roll,
-                    b.batch_name AS batch
-                FROM students s
-                JOIN users u ON s.user_id = u.user_id
-                LEFT JOIN batches b ON s.batch_id = b.batch_id
-                ORDER BY s.student_id ASC;
-            """
+            SELECT
+                s.student_id AS sn,
+                u.user_id,
+                s.full_name AS name,
+                u.username AS roll,
+                b.batch_name AS batch
+            FROM students s
+            JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN batches b ON s.batch_id = b.batch_id
+            ORDER BY s.student_id ASC;
+        """
             cursor.execute(query)
             return cursor.fetchall()
     except Exception as db_err:
