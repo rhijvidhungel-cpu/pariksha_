@@ -104,14 +104,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   function getTargetLabel(notif: any): string {
-    // Resolve student/teacher IDs to usernames
+    // Resolve student/teacher IDs to full details
     let targetLabel = notif.target_id || "N/A";
     if (notif.type === "single_student") {
       const found = students.find((s: any) => String(s.sn || s.student_id) === String(notif.target_id));
-      if (found) targetLabel = found.name || found.full_name || targetLabel;
+      if (found) {
+        const name = found.name || found.full_name || "Unknown";
+        const roll = found.roll || found.username || "N/A";
+        const batch = found.batch || "N/A";
+        targetLabel = `${name} (${roll}) - ${batch}`;
+      }
     } else if (notif.type === "single_teacher") {
       const found = teachers.find((t: any) => String(t.user_id) === String(notif.target_id));
-      if (found) targetLabel = found.name || targetLabel;
+      if (found) {
+        const name = found.name || "Unknown";
+        const email = found.email || "N/A";
+        const dept = found.department || "N/A";
+        targetLabel = `${name} (${email}) - ${dept}`;
+      }
     }
 
     const typeLabels: Record<string, string> = {
