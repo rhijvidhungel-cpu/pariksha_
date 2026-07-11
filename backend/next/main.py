@@ -15,6 +15,7 @@ from routers.allocation import router as allocation_router
 from routers.seat_allocation import router as seat_allocation_router
 from routers import batches
 from routers.exam_routine import router as exam_routine_router
+from routers.notifications import router as notifications_router
 import loginapi
 #from routers import seat_allocation
 
@@ -51,6 +52,7 @@ app.include_router(exam_routine_router)
 app.include_router(allocation_router, prefix="/rooms")
 app.include_router(batches.router)
 app.include_router(seat_allocation_router)
+app.include_router(notifications_router)
 
 
 @app.on_event("startup")

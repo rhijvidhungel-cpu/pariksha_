@@ -19,53 +19,39 @@ export default function StudentDashboard() {
     setStudentName(name);
   }, [router]);
 
-  function logout() {
-    localStorage.clear();
-    router.push("/");
-  }
-
   return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
-      <section className="max-w-5xl mx-auto">
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex justify-between items-center shadow-sm">
-          <div>
-            <h1 className="text-2xl font-extrabold">Student Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">{studentName}</p>
+    <div className="text-[#111827]">
+      <div className="grid md:grid-cols-2 gap-5">
+        <button
+          onClick={() =>
+            router.push("/dashboards/studentdashboard/view_seat_allocation")
+          }
+          className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-left hover:border-[#4F46E5] hover:shadow-md transition-all shadow-sm"
+        >
+          <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-xl mb-4">
+            💺
           </div>
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
-          >
-            Log out
-          </button>
-        </div>
+          <h2 className="text-xl font-bold text-[#111827]">View Seat Allocation</h2>
+          <p className="text-sm text-[#6B7280] mt-2">
+            See only your assigned hall, row, bench, and seat.
+          </p>
+        </button>
 
-        <div className="grid md:grid-cols-2 gap-5 mt-6">
-          <button
-            onClick={() =>
-              router.push("/dashboards/studentdashboard/view_seat_allocation")
-            }
-            className="bg-white border border-slate-200 rounded-xl p-8 text-left hover:border-indigo-400 shadow-sm"
-          >
-            <h2 className="text-xl font-bold">View Seat Allocation</h2>
-            <p className="text-sm text-slate-500 mt-2">
-              See only your assigned hall, row, bench, and seat.
-            </p>
-          </button>
-
-          <button
-            onClick={() =>
-              router.push("/dashboards/studentdashboard/view_exam_routine")
-            }
-            className="bg-white border border-slate-200 rounded-xl p-8 text-left hover:border-emerald-400 shadow-sm"
-          >
-            <h2 className="text-xl font-bold">View Exam Routine</h2>
-            <p className="text-sm text-slate-500 mt-2">
-              Search exam routines by batch, subject, or code.
-            </p>
-          </button>
-        </div>
-      </section>
-    </main>
+        <button
+          onClick={() =>
+            router.push("/dashboards/studentdashboard/view_exam_routine")
+          }
+          className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-left hover:border-[#4F46E5] hover:shadow-md transition-all shadow-sm"
+        >
+          <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-xl mb-4">
+            📅
+          </div>
+          <h2 className="text-xl font-bold text-[#111827]">View Exam Routine</h2>
+          <p className="text-sm text-[#6B7280] mt-2">
+            View your batch's exam routine in tabular format.
+          </p>
+        </button>
+      </div>
+    </div>
   );
 }

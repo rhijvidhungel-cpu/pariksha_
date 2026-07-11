@@ -10,6 +10,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminName, setAdminName] = useState<string>("Master Admin");
   const [adminEmail, setAdminEmail] = useState<string>("admin@ku.edu.np");
   const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [batches, setBatches] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
+
+  // Notification form state
+  const [notifType, setNotifType] = useState("all_students");
+  const [notifTargetId, setNotifTargetId] = useState("");
+  const [notifMessage, setNotifMessage] = useState("");
 
   useEffect(() => {
     const name = localStorage.getItem("username");
@@ -26,7 +38,97 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const email = localStorage.getItem("email") || name;
     setAdminEmail(email);
+    
+    loadNotifications();
+    loadTeachers();
+    loadStudents();
+    loadBatches();
+    loadDepartments();
   }, [pathname, router]); // Re-evaluate cleanly on route modifications
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/notifications");
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      setNotifications([]);
+    }
+  }
+
+  async function loadTeachers() {
+    try {
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/dashboards/admindashboard/teachers");
+      const data = await res.json();
+      setTeachers(Array.isArray(data) ? data : []);
+    } catch {
+      setTeachers([]);
+    }
+  }
+
+  async function loadStudents() {
+    try {
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/students");
+      const data = await res.json();
+      setStudents(Array.isArray(data) ? data : []);
+    } catch {
+      setStudents([]);
+    }
+  }
+
+  async function loadBatches() {
+    try {
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/batches");
+      const data = await res.json();
+      setBatches(Array.isArray(data) ? data : []);
+    } catch {
+      setBatches([]);
+    }
+  }
+
+  async function loadDepartments() {
+    try {
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/departments");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDepartments(data.map((d: any) => d.department_name || d));
+      } else {
+        setDepartments([]);
+      }
+    } catch {
+      setDepartments([]);
+    }
+  }
+
+  async function sendNotification() {
+    if (!notifMessage.trim()) {
+      alert("Please enter a notification message.");
+      return;
+    }
+    try {
+      const payload: any = {
+        type: notifType,
+        message: notifMessage,
+      };
+      if (notifTargetId) {
+        payload.target_id = parseInt(notifTargetId);
+      }
+      const res = await fetch("https://pariksha-9qjs.onrender.com/api/notifications/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to send notification");
+      alert("Notification sent successfully!");
+      setShowNotificationModal(false);
+      setNotifMessage("");
+      setNotifTargetId("");
+      loadNotifications();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
 
   // Evaluates which path tab highlights based on current URL location
   const getNavClass = (targetPath: string) => {
@@ -87,6 +189,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setShowNotificationModal(true)}
+            className="flex items-center justify-center gap-2 w-full bg-indigo-500/10 border border-indigo-500/20 text-[#A5B4FC] rounded-lg py-2.5 text-xs font-medium hover:bg-indigo-500/20 transition-colors cursor-pointer"
+          >
+            🔔 Send Notification
+          </button>
+          <button
+            onClick={() => router.push("/change-password")}
+            className="flex items-center justify-center gap-2 w-full bg-indigo-500/10 border border-indigo-500/20 text-[#A5B4FC] rounded-lg py-2.5 text-xs font-medium hover:bg-indigo-500/20 transition-colors cursor-pointer"
+          >
+            🔑 Change Password
+          </button>
           <button 
             onClick={() => {
               localStorage.clear();
@@ -122,13 +236,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           
           <div className="flex items-center gap-5">
-            <button className="relative p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer" aria-label="Alert Registers">
-              <span className="absolute top-[6px] right-[6px] w-2 h-2 rounded-full bg-[#4F46E5] border-2 border-white"></span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
+            {/* Notification Bell with Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer"
+                aria-label="Notifications"
+              >
+                {notifications.length > 0 && (
+                  <span className="absolute top-[6px] right-[6px] w-2 h-2 rounded-full bg-[#4F46E5] border-2 border-white"></span>
+                )}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-96 overflow-y-auto z-50">
+                  <div className="p-3 border-b border-slate-100">
+                    <h3 className="text-sm font-bold text-[#111827]">Notifications</h3>
+                  </div>
+                  {notifications.length > 0 ? (
+                    notifications.map((notif: any, idx: number) => (
+                      <div key={idx} className="p-3 border-b border-slate-50 hover:bg-slate-50">
+                        <p className="text-xs text-[#4F46E5] font-semibold uppercase">{notif.type || "Notice"}</p>
+                        <p className="text-sm text-[#111827] mt-1">{notif.message}</p>
+                        <p className="text-[10px] text-[#9CA3AF] mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString() : ""}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-sm text-[#9CA3AF] text-center">No notifications yet</div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="w-px h-7 bg-[#E5E7EB]" />
 
@@ -149,6 +290,125 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+
+      {/* Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-extrabold text-[#111827]">Send Notification</h2>
+              <button
+                onClick={() => { setShowNotificationModal(false); setNotifTargetId(""); setNotifMessage(""); }}
+                className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Send To</label>
+                <select
+                  value={notifType}
+                  onChange={(e) => { setNotifType(e.target.value); setNotifTargetId(""); }}
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                >
+                  <option value="all_students">All Students</option>
+                  <option value="all_teachers">All Teachers</option>
+                  <option value="batch_students">Specific Batch (Students)</option>
+                  <option value="department_students">Specific Department (Students)</option>
+                  <option value="department_teachers">Specific Department (Teachers)</option>
+                  <option value="single_student">Individual Student</option>
+                  <option value="single_teacher">Individual Teacher</option>
+                </select>
+              </div>
+
+              {(notifType === "batch_students") && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Batch</label>
+                  <select
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a batch</option>
+                    {batches.map((b: string) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {(notifType === "department_students" || notifType === "department_teachers") && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Department</label>
+                  <select
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a department</option>
+                    {departments.map((d: string) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {notifType === "single_student" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Student</label>
+                  <select
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a student</option>
+                    {students.map((s: any) => (
+                      <option key={s.sn || s.student_id} value={s.sn || s.student_id}>
+                        {s.name || s.full_name} ({s.roll || s.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {notifType === "single_teacher" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">Select Teacher</label>
+                  <select
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a teacher</option>
+                    {teachers.map((t: any) => (
+                      <option key={t.user_id} value={t.user_id}>{t.name} ({t.email})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Message</label>
+                <textarea
+                  value={notifMessage}
+                  onChange={(e) => setNotifMessage(e.target.value)}
+                  placeholder="Type your notification message here..."
+                  rows={4}
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+
+              <button
+                onClick={sendNotification}
+                className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg py-3 text-sm font-bold transition-colors"
+              >
+                Send Notification
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

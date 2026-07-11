@@ -44,35 +44,42 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-950">
+    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       <form
         onSubmit={submit}
-        className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7"
+        className="w-full max-w-md bg-white border border-[#E5E7EB] rounded-xl shadow-sm p-8"
       >
-        <h1 className="text-2xl font-extrabold">Create New Password</h1>
-        <p className="text-sm text-slate-500 mt-2">
-          Enter your temporary password and choose a new password.
+        <div className="text-center mb-6">
+          <h1 className="text-[22px] font-extrabold tracking-wide m-0 bg-gradient-to-r from-[#6366F1] to-[#80f755] bg-clip-text text-transparent">
+            PARIKSHA
+          </h1>
+          <p className="text-[11px] text-[#6B7280] font-medium uppercase tracking-wider mt-1">Change Password</p>
+        </div>
+
+        <h2 className="text-xl font-extrabold text-[#111827]">Create New Password</h2>
+        <p className="text-sm text-[#6B7280] mt-2">
+          Enter your current password and choose a new password.
         </p>
 
-        <label className="block text-xs font-bold text-slate-600 mt-6 mb-2">
-          Temporary Password
+        <label className="block text-xs font-bold text-[#6B7280] mt-6 mb-2">
+          Current Password
         </label>
         <input
           type="password"
           value={oldPassword}
           onChange={(event) => setOldPassword(event.target.value)}
-          className="w-full border border-slate-300 rounded-lg px-4 py-3"
+          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
           required
         />
 
-        <label className="block text-xs font-bold text-slate-600 mt-4 mb-2">
+        <label className="block text-xs font-bold text-[#6B7280] mt-4 mb-2">
           New Password
         </label>
         <input
           type="password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          className="w-full border border-slate-300 rounded-lg px-4 py-3"
+          className="w-full border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100"
           required
         />
 
@@ -85,11 +92,11 @@ export default function ChangePasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white rounded-lg py-3 font-bold"
+          className="mt-6 w-full bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-[#9CA3AF] text-white rounded-lg py-3 text-sm font-bold transition-colors"
         >
           {loading ? "Saving..." : "Save Password"}
         </button>
       </form>
-    </main>
+    </div>
   );
 }

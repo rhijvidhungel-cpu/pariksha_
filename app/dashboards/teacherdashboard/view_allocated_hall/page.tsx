@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 const API = "https://pariksha-9qjs.onrender.com";
@@ -12,6 +11,8 @@ export default function TeacherAllocatedHallPage() {
   const [hall, setHall] = useState<any | null>(null);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHallFull, setShowHallFull] = useState(false);
+  const [showAttendanceSheet, setShowAttendanceSheet] = useState(false);
 
   useEffect(() => {
     loadAssignments();
@@ -75,31 +76,87 @@ export default function TeacherAllocatedHallPage() {
     );
   }, [assignments, sessionSearch]);
 
-  return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
-      <section className="max-w-7xl mx-auto">
-        <Link
-          href="/dashboards/teacherdashboard"
-          className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 mb-4"
-        >
-          ← Back to Teacher Dashboard
-        </Link>
+  // Print only the attendance sheet in A4 format
+  function printAttendanceOnly() {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    let tableRows = attendance.map((row: any) => `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #333; font-size: 12px;">${row.full_name || row.student_id}</td>
+        <td style="padding: 8px; border: 1px solid #333; font-size: 12px;">${row.batch_name}</td>
+        <td style="padding: 8px; border: 1px solid #333; font-size: 12px;">R${row.row_no} B${row.bench_no} S${row.seat_no}</td>
+        <td style="padding: 8px; border: 1px solid #333; height: 30px;"></td>
+      </tr>
+    `).join('');
 
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-          <h1 className="text-2xl font-extrabold">My Allocated Exam Hall</h1>
-          <p className="text-sm text-slate-500 mt-1">
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Attendance Sheet - ${hall?.room_no || ''}</title>
+          <style>
+            @page { size: A4; margin: 15mm; }
+            body { font-family: Arial, sans-serif; }
+            h2 { text-align: center; margin-bottom: 5px; font-size: 16px; }
+            h3 { text-align: center; margin-top: 0; font-size: 14px; font-weight: normal; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f0f0f0; padding: 8px; border: 1px solid #333; font-size: 12px; text-align: left; }
+            td { padding: 8px; border: 1px solid #333; font-size: 12px; }
+            .header-info { text-align: center; margin-bottom: 10px; font-size: 12px; }
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <h2>ATTENDANCE SHEET</h2>
+          <h3>Room: ${hall?.room_no || ''} | Date: ${selected?.exam_date || ''} | Time: ${selected?.exam_time || ''}</h3>
+          <div class="header-info">Invigilator Signature: ___________________</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Batch</th>
+                <th>Seat</th>
+                <th>Signature</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <div style="margin-top: 30px; font-size: 11px;">
+            <p>Total Students: ${attendance.length}</p>
+            <p>Present: ________ | Absent: ________</p>
+          </div>
+          <script>
+            window.print();
+          <\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F3F4F6] text-[#111827]">
+      <div className="p-8">
+        {/* Selection Controls */}
+        <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm p-6">
+          <h1 className="text-2xl font-extrabold text-[#111827]">My Allocated Exam Hall</h1>
+          <p className="text-sm text-[#6B7280] mt-1">
             View assigned invigilation halls and attendance sheets.
           </p>
 
           {loading ? (
-            <div className="mt-6 text-slate-400">Loading assignments...</div>
+            <div className="mt-6 text-[#9CA3AF]">Loading assignments...</div>
           ) : assignments.length ? (
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <input
                 value={sessionSearch}
                 onChange={(event) => setSessionSearch(event.target.value)}
                 placeholder="Search by room, date, or time..."
-                className="flex-1 border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                className="flex-1 border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#4F46E5]"
               />
               <select
                 value={
@@ -118,7 +175,7 @@ export default function TeacherAllocatedHallPage() {
                     ) || null
                   );
                 }}
-                className="border border-slate-300 rounded-lg px-4 py-3 text-sm min-w-[260px]"
+                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm min-w-[260px]"
               >
                 {filteredAssignments.map((item) => (
                   <option
@@ -131,90 +188,112 @@ export default function TeacherAllocatedHallPage() {
               </select>
             </div>
           ) : (
-            <div className="mt-6 text-slate-400">
+            <div className="mt-6 text-[#9CA3AF]">
               No hall has been assigned to you yet.
             </div>
           )}
         </div>
 
         {hall && (
-          <div className="grid xl:grid-cols-2 gap-6 mt-6">
-            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm overflow-auto">
-              <h2 className="text-lg font-bold mb-4">Hall Layout: {hall.room_no}</h2>
-              {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
-                <div key={rowIndex} className="flex items-center gap-4 mb-5">
-                  <div className="w-16 font-bold">Row {rowIndex + 1}</div>
-                  {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
-                    <div
-                      key={benchIndex}
-                      className="flex border-2 border-slate-900 rounded-lg p-3 bg-white"
-                    >
-                      {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
-                        const allocation = seatMap.get(
-                          `${rowIndex + 1}-${benchIndex + 1}-${seatIndex + 1}`
-                        );
-                        return (
-                          <div
-                            key={seatIndex}
-                            className={`w-24 min-h-20 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
-                              allocation ? "bg-emerald-100 border-emerald-700" : "bg-slate-100 border-slate-300"
-                            }`}
-                          >
-                            {allocation ? (
-                              <>
-                                <div>{allocation.full_name || allocation.student_id}</div>
-                                <div>{allocation.batch_name}</div>
-                                <div>{allocation.subject_code}</div>
-                                <div>S{allocation.seat_no}</div>
-                              </>
-                            ) : (
-                              <>S{seatIndex + 1}</>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </section>
-
-            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-bold mb-4">Attendance Sheet</h2>
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                    <tr>
-                      <th className="p-3">Student</th>
-                      <th className="p-3">Batch</th>
-                      <th className="p-3">Seat</th>
-                      <th className="p-3">Signature</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {attendance.map((row) => (
-                      <tr key={`${row.student_id}-${row.row_no}-${row.seat_no}`}>
-                        <td className="p-3">{row.full_name || row.student_id}</td>
-                        <td className="p-3">{row.batch_name}</td>
-                        <td className="p-3">
-                          R{row.row_no} B{row.bench_no} S{row.seat_no}
-                        </td>
-                        <td className="p-3 border-l border-slate-100">&nbsp;</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <div className="flex flex-col gap-6 mt-6">
+            {/* Hall View Button */}
+            <div className="flex gap-4">
               <button
-                onClick={() => window.print()}
-                className="mt-4 bg-indigo-600 text-white rounded-lg px-5 py-3 font-bold"
+                onClick={() => setShowHallFull(!showHallFull)}
+                className="bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg px-6 py-3 text-sm font-bold transition-colors"
               >
-                Print Attendance Sheet
+                {showHallFull ? "Collapse Hall View" : "View Full Hall Layout"}
               </button>
-            </section>
+              <button
+                onClick={() => { setShowAttendanceSheet(!showAttendanceSheet); }}
+                className="bg-[#10B981] hover:bg-[#059669] text-white rounded-lg px-6 py-3 text-sm font-bold transition-colors"
+              >
+                {showAttendanceSheet ? "Hide Attendance Sheet" : "View Attendance Sheet"}
+              </button>
+            </div>
+
+            {/* Full Hall Layout */}
+            {showHallFull && (
+              <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm overflow-auto w-full">
+                <h2 className="text-lg font-bold mb-4 text-[#111827]">Hall Layout: {hall.room_no}</h2>
+                {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
+                  <div key={rowIndex} className="flex items-center gap-4 mb-5">
+                    <div className="w-16 font-bold text-[#4F46E5]">Row {rowIndex + 1}</div>
+                    {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
+                      <div
+                        key={benchIndex}
+                        className="flex border-2 border-[#1F2937] rounded-lg p-3 bg-white"
+                      >
+                        {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
+                          const allocation = seatMap.get(
+                            `${rowIndex + 1}-${benchIndex + 1}-${seatIndex + 1}`
+                          );
+                          return (
+                            <div
+                              key={seatIndex}
+                              className={`w-24 min-h-20 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
+                                allocation ? "bg-emerald-100 border-emerald-700" : "bg-slate-100 border-slate-300"
+                              }`}
+                            >
+                              {allocation ? (
+                                <>
+                                  <div>{allocation.full_name || allocation.student_id}</div>
+                                  <div>{allocation.batch_name}</div>
+                                  <div>{allocation.subject_code}</div>
+                                  <div>S{allocation.seat_no}</div>
+                                </>
+                              ) : (
+                                <>S{seatIndex + 1}</>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {/* Attendance Sheet Section */}
+            {showAttendanceSheet && (
+              <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm">
+                <h2 className="text-lg font-bold mb-4 text-[#111827]">Attendance Sheet</h2>
+                <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-[#F9FAFB] text-[#6B7280] uppercase text-xs">
+                      <tr>
+                        <th className="p-3 font-semibold">Student</th>
+                        <th className="p-3 font-semibold">Batch</th>
+                        <th className="p-3 font-semibold">Seat</th>
+                        <th className="p-3 font-semibold">Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F3F4F6]">
+                      {attendance.map((row) => (
+                        <tr key={`${row.student_id}-${row.row_no}-${row.seat_no}`}>
+                          <td className="p-3">{row.full_name || row.student_id}</td>
+                          <td className="p-3">{row.batch_name}</td>
+                          <td className="p-3">
+                            R{row.row_no} B{row.bench_no} S{row.seat_no}
+                          </td>
+                          <td className="p-3 border-l border-[#F3F4F6]">&nbsp;</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  onClick={printAttendanceOnly}
+                  className="mt-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg px-5 py-3 text-sm font-bold transition-colors"
+                >
+                  🖨️ Print Attendance Sheet (A4)
+                </button>
+              </section>
+            )}
           </div>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

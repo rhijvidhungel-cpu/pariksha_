@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 
 const API = "https://pariksha-9qjs.onrender.com";
 
@@ -127,25 +126,18 @@ export default function AdminHallView() {
     return map;
   }, [hall]);
 
-  if (!roomId) return <div className="p-8 text-black">Invalid Room ID</div>;
+  if (!roomId) return <div className="p-8 text-[#111827]">Invalid Room ID</div>;
 
   return (
-    <main className="p-8 text-black bg-slate-100 min-h-screen">
-      <Link
-        href="/dashboards/admindashboard/classrooms"
-        className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 mb-4"
-      >
-        ← Back to Classrooms
-      </Link>
-
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+    <div className="text-[#111827]">
+      <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold">
+            <h1 className="text-2xl font-extrabold text-[#111827]">
               Room: {hall?.room_no || roomId}
             </h1>
             {hall && (
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-[#6B7280] mt-1">
                 Allocated {hall.allocated} | Remaining {hall.remaining} | Usable{" "}
                 {hall.usable_capacity}
               </p>
@@ -154,13 +146,13 @@ export default function AdminHallView() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2">
+              <label className="block text-xs font-bold text-[#6B7280] mb-2">
                 Exam Session
               </label>
               <select
                 value={selectedSession}
                 onChange={(event) => setSelectedSession(event.target.value)}
-                className="border border-slate-300 rounded-lg px-4 py-3 text-sm bg-white min-w-[220px]"
+                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[220px]"
               >
                 {sessions.map((session, index) => (
                   <option
@@ -174,14 +166,14 @@ export default function AdminHallView() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2">
+              <label className="block text-xs font-bold text-[#6B7280] mb-2">
                 Assign Invigilator
               </label>
               <div className="flex gap-2">
                 <select
                   value={selectedTeacherId}
                   onChange={(event) => setSelectedTeacherId(event.target.value)}
-                  className="border border-slate-300 rounded-lg px-4 py-3 text-sm bg-white min-w-[200px]"
+                  className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[200px]"
                 >
                   <option value="">Select teacher</option>
                   {teachers.map((teacher) => (
@@ -193,7 +185,7 @@ export default function AdminHallView() {
                 <button
                   onClick={saveInvigilator}
                   disabled={savingInvigilator}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white rounded-lg px-4 py-3 text-sm font-bold whitespace-nowrap"
+                  className="bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-[#9CA3AF] text-white rounded-lg px-4 py-3 text-sm font-bold whitespace-nowrap"
                 >
                   {savingInvigilator ? "Saving..." : "Save"}
                 </button>
@@ -208,16 +200,16 @@ export default function AdminHallView() {
         </div>
 
         {loading ? (
-          <div className="text-slate-400">Loading hall...</div>
+          <div className="text-[#9CA3AF]">Loading hall...</div>
         ) : hall ? (
-          <div className="overflow-auto">
+          <div className="overflow-auto w-full">
             {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
               <div key={rowIndex} className="flex items-center gap-5 mb-6">
-                <div className="w-20 font-bold">Row {rowIndex + 1}</div>
+                <div className="w-20 font-bold text-[#4F46E5]">Row {rowIndex + 1}</div>
                 {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
                   <div
                     key={benchIndex}
-                    className="flex border-2 border-black rounded-lg p-4 bg-white"
+                    className="flex border-2 border-[#1F2937] rounded-lg p-4 bg-white"
                   >
                     {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
                       const allocation = seatMap.get(
@@ -249,9 +241,9 @@ export default function AdminHallView() {
             ))}
           </div>
         ) : (
-          <div className="text-slate-400">No hall data found.</div>
+          <div className="text-[#9CA3AF]">No hall data found.</div>
         )}
       </section>
-    </main>
+    </div>
   );
 }
