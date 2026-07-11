@@ -433,7 +433,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <option value="">Select a student</option>
                     {filteredStudents.map((s: any) => (
                       <option key={s.sn || s.student_id} value={String(s.sn || s.student_id)}>
-                        {s.name || s.full_name} ({s.roll || s.username})
+                        {s.name || s.full_name} ({s.roll || s.username}) - {s.batch || "N/A"}
                       </option>
                     ))}
                   </select>
@@ -462,7 +462,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   >
                     <option value="">Select a teacher</option>
                     {filteredTeachers.map((t: any) => (
-                      <option key={t.user_id} value={String(t.user_id)}>{t.name} ({t.email})</option>
+                      <option key={t.user_id} value={String(t.user_id)}>{t.name} ({t.email}) - {t.department || "N/A"}</option>
                     ))}
                   </select>
                   {teacherSearch && (
