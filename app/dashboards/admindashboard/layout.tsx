@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,11 +23,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [notifTargetId, setNotifTargetId] = useState("");
   const [notifMessage, setNotifMessage] = useState("");
 
+  // Search state for dropdowns
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
+
   useEffect(() => {
     const name = localStorage.getItem("username");
     const role = localStorage.getItem("role");
 
-    // Strict unified checkpoint tracking
     if (!name || role !== "admin") {
       router.replace("/");
       return;
@@ -44,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     loadStudents();
     loadBatches();
     loadDepartments();
-  }, [pathname, router]); // Re-evaluate cleanly on route modifications
+  }, [pathname, router]);
 
   async function loadNotifications() {
     try {
@@ -100,6 +103,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }
 
+  function getTargetLabel(notif: any): string {
+    const typeLabels: Record<string, string> = {
+      "all_students": "All Students",
+      "all_teachers": "All Teachers",
+      "batch_students": `Batch: ${notif.target_id || "N/A"}`,
+      "department_students": `Dept (Students): ${notif.target_id || "N/A"}`,
+      "department_teachers": `Dept (Teachers): ${notif.target_id || "N/A"}`,
+      "single_student": `Student ID: ${notif.target_id || "N/A"}`,
+      "single_teacher": `Teacher ID: ${notif.target_id || "N/A"}`,
+    };
+    return typeLabels[notif.type] || notif.type || "Notice";
+  }
+
   async function sendNotification() {
     if (!notifMessage.trim()) {
       alert("Please enter a notification message.");
@@ -130,7 +146,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }
 
-  // Evaluates which path tab highlights based on current URL location
   const getNavClass = (targetPath: string) => {
     const baseClass = "flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all text-left w-full border-none bg-transparent cursor-pointer ";
     const isActive = pathname === targetPath;
@@ -141,7 +156,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return baseClass + "font-medium text-[#C7D2FE] hover:bg-white/5";
   };
 
-  // Prevent UI flashing or breakdown during mid-transit verification
+  // Filtered students/teachers based on search
+  const filteredStudents = useMemo(() => {
+    if (!studentSearch.trim()) return students;
+    const q = studentSearch.toLowerCase();
+    return students.filter((s: any) => 
+      (s.name || s.full_name || "").toLowerCase().includes(q) ||
+      (s.roll || s.username || "").toLowerCase().includes(q)
+    );
+  }, [students, studentSearch]);
+
+  const filteredTeachers = useMemo(() => {
+    if (!teacherSearch.trim()) return teachers;
+    const q = teacherSearch.toLowerCase();
+    return teachers.filter((t: any) => 
+      (t.name || "").toLowerCase().includes(q) ||
+      (t.email || "").toLowerCase().includes(q)
+    );
+  }, [teachers, teacherSearch]);
+
+  // Format date/time nicely
+  function formatDateTime(dateStr: string): string {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: true
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+
   if (!isVerified) {
     return (
       <div className="min-h-screen bg-[#2E1A47] flex items-center justify-center text-white font-medium">
@@ -252,16 +300,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </svg>
               </button>
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-96 overflow-y-auto z-50">
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-96 overflow-y-auto z-50">
                   <div className="p-3 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-[#111827]">Notifications</h3>
+                    <h3 className="text-sm font-bold text-[#111827]">Notifications ({notifications.length})</h3>
                   </div>
                   {notifications.length > 0 ? (
                     notifications.map((notif: any, idx: number) => (
                       <div key={idx} className="p-3 border-b border-slate-50 hover:bg-slate-50">
-                        <p className="text-xs text-[#4F46E5] font-semibold uppercase">{notif.type || "Notice"}</p>
+                        <p className="text-xs text-[#4F46E5] font-semibold uppercase">{getTargetLabel(notif)}</p>
                         <p className="text-sm text-[#111827] mt-1">{notif.message}</p>
-                        <p className="text-[10px] text-[#9CA3AF] mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString() : ""}</p>
+                        <p className="text-[10px] text-[#9CA3AF] mt-1">{formatDateTime(notif.created_at)}</p>
                       </div>
                     ))
                   ) : (
@@ -298,7 +346,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-extrabold text-[#111827]">Send Notification</h2>
               <button
-                onClick={() => { setShowNotificationModal(false); setNotifTargetId(""); setNotifMessage(""); }}
+                onClick={() => { setShowNotificationModal(false); setNotifTargetId(""); setNotifMessage(""); setTeacherSearch(""); setStudentSearch(""); }}
                 className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer text-xl"
               >
                 ✕
@@ -309,7 +357,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <label className="block text-xs font-bold text-gray-700 mb-1">Send To</label>
                 <select
                   value={notifType}
-                  onChange={(e) => { setNotifType(e.target.value); setNotifTargetId(""); }}
+                  onChange={(e) => { setNotifType(e.target.value); setNotifTargetId(""); setTeacherSearch(""); setStudentSearch(""); }}
                   className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
                 >
                   <option value="all_students">All Students</option>
@@ -357,37 +405,58 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {notifType === "single_student" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Select Student</label>
+                  {/* Search bar for students */}
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="🔍 Search student by name or roll..."
+                    className="w-full border border-gray-400 rounded-lg px-4 py-2.5 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500 mb-2"
+                  />
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
                     className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
+                    size={Math.min(filteredStudents.length + 1, 6)}
                   >
                     <option value="">Select a student</option>
-                    {students.map((s: any) => (
-                      <option
-                      key={s.user_id}
-                      value={String(s.user_id)}
-                  >
+                    {filteredStudents.map((s: any) => (
+                      <option key={s.sn || s.student_id} value={String(s.sn || s.student_id)}>
                         {s.name || s.full_name} ({s.roll || s.username})
                       </option>
                     ))}
                   </select>
+                  {studentSearch && (
+                    <p className="text-xs text-gray-500 mt-1">{filteredStudents.length} student(s) found</p>
+                  )}
                 </div>
               )}
 
               {notifType === "single_teacher" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Select Teacher</label>
+                  {/* Search bar for teachers */}
+                  <input
+                    type="text"
+                    value={teacherSearch}
+                    onChange={(e) => setTeacherSearch(e.target.value)}
+                    placeholder="🔍 Search teacher by name or email..."
+                    className="w-full border border-gray-400 rounded-lg px-4 py-2.5 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500 mb-2"
+                  />
                   <select
                     value={notifTargetId}
                     onChange={(e) => setNotifTargetId(e.target.value)}
                     className="w-full border border-gray-400 rounded-lg px-4 py-3 text-sm text-gray-900 font-medium outline-none focus:border-indigo-500"
+                    size={Math.min(filteredTeachers.length + 1, 6)}
                   >
                     <option value="">Select a teacher</option>
-                    {teachers.map((t: any) => (
+                    {filteredTeachers.map((t: any) => (
                       <option key={t.user_id} value={String(t.user_id)}>{t.name} ({t.email})</option>
                     ))}
                   </select>
+                  {teacherSearch && (
+                    <p className="text-xs text-gray-500 mt-1">{filteredTeachers.length} teacher(s) found</p>
+                  )}
                 </div>
               )}
 

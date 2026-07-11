@@ -29,7 +29,17 @@ def get_all_notifications():
                 LIMIT 50;
                 """
             )
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                result.append({
+                    "id": row["id"],
+                    "type": row["type"],
+                    "message": row["message"],
+                    "target_id": row.get("target_id"),
+                    "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+                })
+            return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -56,24 +66,35 @@ def get_student_notifications(user_id: int):
             if not student_info:
                 return []
 
-            batch_name = student_info["batch_name"] if isinstance(student_info, dict) else student_info[0]
-            dept_name = student_info["department_name"] if isinstance(student_info, dict) else student_info[1]
+            batch_name = student_info["batch_name"]
+            dept_name = student_info["department_name"]
 
+            # Use CAST for proper type comparison
             cursor.execute(
                 """
-                SELECT id, type, message, created_at
+                SELECT id, type, message, target_id, created_at
                 FROM notifications
                 WHERE
                     type = 'all_students'
-                    OR (type = 'single_student' AND target_id = %s::varchar)
-                    OR (type = 'batch_students' AND target_id = %s)
-                    OR (type = 'department_students' AND target_id = %s)
+                    OR (type = 'single_student' AND CAST(target_id AS TEXT) = CAST(%s AS TEXT))
+                    OR (type = 'batch_students' AND CAST(target_id AS TEXT) = CAST(%s AS TEXT))
+                    OR (type = 'department_students' AND CAST(target_id AS TEXT) = CAST(%s AS TEXT))
                 ORDER BY created_at DESC
                 LIMIT 20;
                 """,
-                (user_id, batch_name, dept_name),
+                (str(user_id), batch_name, dept_name),
             )
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                result.append({
+                    "id": row["id"],
+                    "type": row["type"],
+                    "message": row["message"],
+                    "target_id": row.get("target_id"),
+                    "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+                })
+            return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -96,22 +117,32 @@ def get_teacher_notifications(user_id: int):
                 (user_id,),
             )
             teacher_info = cursor.fetchone()
-            dept_name = teacher_info["department_name"] if isinstance(teacher_info, dict) else teacher_info[0] if teacher_info else ""
+            dept_name = teacher_info["department_name"] if teacher_info else ""
 
             cursor.execute(
                 """
-                SELECT id, type, message, created_at
+                SELECT id, type, message, target_id, created_at
                 FROM notifications
                 WHERE
                     type = 'all_teachers'
-                    OR (type = 'single_teacher' AND target_id = %s::varchar)
-                    OR (type = 'department_teachers' AND target_id = %s)
+                    OR (type = 'single_teacher' AND CAST(target_id AS TEXT) = CAST(%s AS TEXT))
+                    OR (type = 'department_teachers' AND CAST(target_id AS TEXT) = CAST(%s AS TEXT))
                 ORDER BY created_at DESC
                 LIMIT 20;
                 """,
-                (user_id, dept_name),
+                (str(user_id), dept_name),
             )
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                result.append({
+                    "id": row["id"],
+                    "type": row["type"],
+                    "message": row["message"],
+                    "target_id": row.get("target_id"),
+                    "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+                })
+            return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -123,7 +154,7 @@ def send_notification(data: NotificationSend):
         with get_raw_db() as conn:
             cursor = conn.cursor()
 
-            # Create notifications table if not exists
+            # Create notifications table if not exists (with TEXT target_id)
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS notifications (
@@ -144,6 +175,6 @@ def send_notification(data: NotificationSend):
                 (data.type, data.message, data.target_id),
             )
             conn.commit()
-            return {"success": True, "message": "Notification sent."}
+            return {"success": True, "message": "Notification sent successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
