@@ -151,12 +151,6 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div className="space-y-4">
-            <a
-              href="mailto:isms@ku.edu.np"
-              className="block text-center bg-linear-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold hover:opacity-90"
-            >
-              Email ISMS
-            </a>
             <button
               onClick={() => setOption("landing")}
               className="block w-full text-center border py-4 rounded-xl text-purple-600 font-semibold hover:bg-gray-50"
