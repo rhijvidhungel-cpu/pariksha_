@@ -153,14 +153,9 @@ const LoginForm = () => {
                             </button>
                         </div>
 
-                        <div style={styles.supportLinkCenter}>
-                            <Link href="/forgot-password" style={styles.forgotPassLink}>
-                                Forgot Password?
-                            </Link>
-                        </div>
                         <div style={styles.adminLinkCenter}>
                             <Link href="/forgot-admin-password" style={styles.adminForgotLink}>
-                                Forgot password for admin?
+                                Forgot password?
                             </Link>
                         </div>
                     </form>

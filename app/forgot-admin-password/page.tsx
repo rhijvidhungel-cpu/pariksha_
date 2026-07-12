@@ -44,15 +44,15 @@ export default function AdminForgotPasswordPage() {
     return (
       <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-950">
         <section className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7">
-          <h1 className="text-2xl font-extrabold">Admin PIN Reset</h1>
-          <p className="text-sm text-slate-500 mt-2">
+          <h1 className="text-2xl font-extrabold text-gray-900">Admin PIN Reset</h1>
+          <p className="text-sm text-gray-600 mt-2">
             Enter your admin email and the secret PIN you created. The password will
             reset to <span className="font-mono font-bold">temporary_password</span>.
           </p>
 
           <form onSubmit={handlePinReset} className="mt-6 flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-2">
+              <label className="block text-xs font-bold text-gray-700 mb-2">
                 Admin Email
               </label>
               <input
@@ -66,7 +66,7 @@ export default function AdminForgotPasswordPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-2">
+              <label className="block text-xs font-bold text-gray-700 mb-2">
                 Secret PIN
               </label>
               <input
@@ -120,44 +120,44 @@ export default function AdminForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🔐</div>
 
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900">
             Admin Password Reset
           </h1>
 
-          <p className="text-gray-500 mt-2">
-            Admin password resets are handled by the university administration.
-            If you have set a secret PIN, you can reset it yourself below.
-            Otherwise, please contact ISMS for assistance.
+          <p className="text-gray-600 mt-2">
+            Password reset for the admin account can only be done by the admin
+            themselves using their secret PIN. If you have set a secret PIN, use
+            the option below. Otherwise, contact ISMS for assistance.
           </p>
         </div>
 
         {/* Contact Card */}
         <div className="border rounded-2xl overflow-hidden mb-8">
           <div className="p-5 border-b">
-            <p className="font-semibold text-gray-700">
+            <p className="font-semibold text-gray-900">
               Kathmandu University
             </p>
-            <p className="text-gray-500">
+            <p className="text-gray-600">
               Block 03, Central Campus
             </p>
-            <p className="text-gray-500">
+            <p className="text-gray-600">
               Dhulikhel, Nepal
             </p>
           </div>
 
           <div className="p-5 border-b flex justify-between">
-            <span>Phone</span>
-            <span>+977-11-415100</span>
+            <span className="text-gray-700 font-medium">Phone</span>
+            <span className="text-gray-900">+977-11-415100</span>
           </div>
 
           <div className="p-5 border-b flex justify-between">
-            <span>Extension</span>
-            <span>4100</span>
+            <span className="text-gray-700 font-medium">Extension</span>
+            <span className="text-gray-900">4100</span>
           </div>
 
           <div className="p-5 flex justify-between">
-            <span>Email</span>
-            <span className="font-medium">isms@ku.edu.np</span>
+            <span className="text-gray-700 font-medium">Email</span>
+            <span className="font-medium text-gray-900">isms@ku.edu.np</span>
           </div>
         </div>
 
@@ -176,13 +176,6 @@ export default function AdminForgotPasswordPage() {
           >
             Contact Administration
           </a>
-
-          <Link
-            href="/forgot-password"
-            className="block text-center border py-4 rounded-xl text-purple-600 font-semibold hover:bg-gray-50"
-          >
-            Student / Teacher Reset
-          </Link>
 
           <Link
             href="/"
