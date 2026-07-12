@@ -154,7 +154,7 @@ const LoginForm = () => {
                         </div>
 
                         <div style={styles.adminLinkCenter}>
-                            <Link href="/forgot-admin-password" style={styles.adminForgotLink}>
+                            <Link href="/forgot-password" style={styles.adminForgotLink}>
                                 Forgot password?
                             </Link>
                         </div>
