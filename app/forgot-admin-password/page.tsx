@@ -6,22 +6,24 @@ import { useState } from "react";
 const API = "https://pariksha-9qjs.onrender.com";
 
 export default function AdminForgotPasswordPage() {
+  const [step, setStep] = useState<"contact" | "pin-reset">("contact");
   const [username, setUsername] = useState("");
+  const [pin, setPin] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handlePinReset(event: React.FormEvent) {
     event.preventDefault();
     setMessage("");
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/admin/forgot-password`, {
+      const res = await fetch(`${API}/admin/reset-with-pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username: username.trim(), pin }),
       });
       const data = await res.json();
 
@@ -29,10 +31,8 @@ export default function AdminForgotPasswordPage() {
         throw new Error(data.detail || "Unable to reset admin password.");
       }
 
-      setMessage(
-        "Password reset successful. Use temporary_password, then create your own password."
-      );
-      setUsername("");
+      setMessage(data.message || "Password reset successful. Use 'temporary_password' to log in.");
+      setPin("");
     } catch (err: any) {
       setError(err.message || "Unable to reset admin password.");
     } finally {
@@ -40,59 +40,159 @@ export default function AdminForgotPasswordPage() {
     }
   }
 
-  return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-950">
-      <section className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7">
-        <h1 className="text-2xl font-extrabold">Admin Password Reset</h1>
-        <p className="text-sm text-slate-500 mt-2">
-          Enter the admin email username. The password will reset to{" "}
-          <span className="font-mono font-bold">temporary_password</span>.
-        </p>
+  if (step === "pin-reset") {
+    return (
+      <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-950">
+        <section className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7">
+          <h1 className="text-2xl font-extrabold">Admin PIN Reset</h1>
+          <p className="text-sm text-slate-500 mt-2">
+            Enter your admin email and the secret PIN you created. The password will
+            reset to <span className="font-mono font-bold">temporary_password</span>.
+          </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-600 mb-2">
-              Admin Email Username
-            </label>
-            <input
-              type="email"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
-              placeholder="admin@example.com"
-              required
-            />
+          <form onSubmit={handlePinReset} className="mt-6 flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-2">
+                Admin Email
+              </label>
+              <input
+                type="email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                placeholder="admin@ku.edu.np"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-2">
+                Secret PIN
+              </label>
+              <input
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                placeholder="Enter your secret PIN"
+                required
+                maxLength={20}
+              />
+            </div>
+
+            {message && (
+              <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg p-3 text-sm font-semibold">
+                {message}
+              </div>
+            )}
+            {error && (
+              <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm font-semibold">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white font-bold rounded-lg py-3"
+            >
+              {loading ? "Resetting..." : "Reset Password with PIN"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setStep("contact"); setError(""); setMessage(""); }}
+              className="text-sm text-slate-500 hover:text-slate-700 text-center"
+            >
+              ← Back to contact information
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-4">🔐</div>
+
+          <h1 className="text-2xl font-bold text-gray-800">
+            Admin Password Reset
+          </h1>
+
+          <p className="text-gray-500 mt-2">
+            Admin password resets are handled by the university administration.
+            If you have set a secret PIN, you can reset it yourself below.
+            Otherwise, please contact ISMS for assistance.
+          </p>
+        </div>
+
+        {/* Contact Card */}
+        <div className="border rounded-2xl overflow-hidden mb-8">
+          <div className="p-5 border-b">
+            <p className="font-semibold text-gray-700">
+              Kathmandu University
+            </p>
+            <p className="text-gray-500">
+              Block 03, Central Campus
+            </p>
+            <p className="text-gray-500">
+              Dhulikhel, Nepal
+            </p>
           </div>
 
-          {message && (
-            <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg p-3 text-sm font-semibold">
-              {message}
-            </div>
-          )}
-          {error && (
-            <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm font-semibold">
-              {error}
-            </div>
-          )}
+          <div className="p-5 border-b flex justify-between">
+            <span>Phone</span>
+            <span>+977-11-415100</span>
+          </div>
 
+          <div className="p-5 border-b flex justify-between">
+            <span>Extension</span>
+            <span>4100</span>
+          </div>
+
+          <div className="p-5 flex justify-between">
+            <span>Email</span>
+            <span className="font-medium">isms@ku.edu.np</span>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="space-y-4">
           <button
-            type="submit"
-            disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white font-bold rounded-lg py-3"
+            onClick={() => setStep("pin-reset")}
+            className="block w-full text-center bg-linear-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold hover:opacity-90"
           >
-            {loading ? "Resetting..." : "Reset Password"}
+            Reset with Secret PIN
           </button>
-        </form>
 
-        <div className="mt-5 flex flex-col gap-2 text-center text-sm">
-          <Link href="/forgot-password" className="text-slate-500">
-            Student / teacher reset
+          <a
+            href="mailto:isms@ku.edu.np"
+            className="block text-center border py-4 rounded-xl text-purple-600 font-semibold hover:bg-gray-50"
+          >
+            Contact Administration
+          </a>
+
+          <Link
+            href="/forgot-password"
+            className="block text-center border py-4 rounded-xl text-purple-600 font-semibold hover:bg-gray-50"
+          >
+            Student / Teacher Reset
           </Link>
-          <Link href="/" className="text-slate-500">
-            Back to login
+
+          <Link
+            href="/"
+            className="block text-center border py-4 rounded-xl text-purple-600 font-semibold hover:bg-gray-50"
+          >
+            ← Back to Login
           </Link>
         </div>
-      </section>
-    </main>
+
+      </div>
+    </div>
   );
 }

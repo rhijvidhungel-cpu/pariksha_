@@ -33,6 +33,9 @@ const LoginForm = () => {
                     if (data.email || data.role === "admin") {
                         localStorage.setItem("email", data.email || data.username);
                     }
+                    if (data.has_pin !== undefined) {
+                        localStorage.setItem("has_pin", data.has_pin ? "true" : "false");
+                    }
                 }
                 if (data.first_login) {
                     router.push("/change-password");
@@ -76,6 +79,7 @@ const LoginForm = () => {
                 localStorage.setItem("username", "admin@ku.edu.np");
                 localStorage.setItem("email", "admin@ku.edu.np");
                 localStorage.setItem("role", "admin");
+                localStorage.setItem("has_pin", "false");
                 router.push("/dashboards/admindashboard");
                 return;
             }

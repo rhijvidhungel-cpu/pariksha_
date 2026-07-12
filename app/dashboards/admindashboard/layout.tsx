@@ -268,6 +268,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             🔑 Change Password
           </button>
+          <button
+            onClick={() => router.push("/change-password")}
+            className="flex items-center justify-center gap-2 w-full bg-purple-500/10 border border-purple-500/20 text-[#C4B5FD] rounded-lg py-2.5 text-xs font-medium hover:bg-purple-500/20 transition-colors cursor-pointer"
+          >
+            🔐 Change PIN
+          </button>
           <button 
             onClick={() => {
               localStorage.clear();

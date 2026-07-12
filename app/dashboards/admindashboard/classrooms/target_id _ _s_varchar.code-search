@@ -1,0 +1,13 @@
+# Query: target_id = %s::varchar
+# ContextLines: 1
+
+2 results - 1 file
+
+backend\next\routers\notifications.py:
+   67                      type = 'all_students'
+   68:                     OR (type = 'single_student' AND target_id = %s::v)
+   69                      OR (type = 'batch_students' AND target_id = %s)
+
+  106                      type = 'all_teachers'
+  107:                     OR (type = 'single_teacher' AND target_id = %s::varchar)
+  108                      OR (type = 'department_teachers' AND target_id = %s)
