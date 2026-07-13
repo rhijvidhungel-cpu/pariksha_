@@ -37,6 +37,17 @@ class ChangePin(BaseModel):
     new_pin: str
 
 
+class VerifyPin(BaseModel):
+    username: str
+    pin: str
+
+
+class AdminResetWithPassword(BaseModel):
+    username: str
+    pin: str
+    new_password: str
+
+
 ADMIN_TEMP_PASSWORD = "temporary_password"
 
 
@@ -338,6 +349,162 @@ def admin_forgot_password(data: ResetPassword):
                     "Password reset successful. Log in with temporary_password, "
                     "then create your own password."
                 ),
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/check-pin-exists")
+def admin_check_pin_exists(data: ResetPassword):
+    """Check if an admin account has a PIN set. Returns has_pin status."""
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT user_id, pin, role
+                FROM users
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (data.username.strip(),),
+            )
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="Admin account not found.")
+
+            role = user["role"] if isinstance(user, dict) else user[2]
+            if role != "admin":
+                raise HTTPException(status_code=400, detail="Only admin accounts can use this endpoint.")
+
+            stored_pin = user["pin"] if isinstance(user, dict) else user[1]
+            has_pin = bool(stored_pin)
+
+            return {
+                "success": True,
+                "has_pin": has_pin,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/verify-pin")
+def admin_verify_pin(data: VerifyPin):
+    """Step 1: Verify admin's PIN without resetting password."""
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT user_id, pin, role
+                FROM users
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (data.username.strip(),),
+            )
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="Admin account not found.")
+
+            role = user["role"] if isinstance(user, dict) else user[2]
+            if role != "admin":
+                raise HTTPException(status_code=400, detail="Only admin accounts can use this endpoint.")
+
+            stored_pin = user["pin"] if isinstance(user, dict) else user[1]
+            if not stored_pin:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No PIN is set for this admin. Contact ISMS at isms@ku.edu.np.",
+                )
+
+            # Verify the PIN
+            if not bcrypt.checkpw(data.pin.encode("utf-8"), stored_pin.encode("utf-8")):
+                raise HTTPException(status_code=400, detail="Incorrect PIN. Please try again.")
+
+            return {
+                "success": True,
+                "message": "PIN verified successfully.",
+                "user_id": user["user_id"] if isinstance(user, dict) else user[0],
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/reset-password-with-username")
+def admin_reset_password_with_username(data: AdminResetWithPassword):
+    """Step 2: After PIN verification, reset admin password with new password."""
+    try:
+        if len(data.new_password) < 6:
+            raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT user_id, pin, role
+                FROM users
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (data.username.strip(),),
+            )
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="Admin account not found.")
+
+            role = user["role"] if isinstance(user, dict) else user[2]
+            if role != "admin":
+                raise HTTPException(status_code=400, detail="Only admin accounts can reset with PIN.")
+
+            stored_pin = user["pin"] if isinstance(user, dict) else user[1]
+            if not stored_pin:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No PIN is set for this admin. Contact ISMS at isms@ku.edu.np.",
+                )
+
+            # Verify the PIN again
+            if not bcrypt.checkpw(data.pin.encode("utf-8"), stored_pin.encode("utf-8")):
+                raise HTTPException(status_code=400, detail="PIN verification failed. Please restart the process.")
+
+            # Hash the new password
+            hashed_password = bcrypt.hashpw(
+                data.new_password.encode("utf-8"),
+                bcrypt.gensalt(),
+            ).decode("utf-8")
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET password=%s,
+                    temporary_password=%s,
+                    first_login=FALSE
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (
+                    hashed_password,
+                    data.new_password,
+                    data.username.strip(),
+                ),
+            )
+            conn.commit()
+
+            return {
+                "success": True,
+                "message": "Password reset successful. You can now log in with your new password.",
             }
 
     except HTTPException:
