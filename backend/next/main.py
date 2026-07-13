@@ -62,6 +62,23 @@ def ensure_schema():
         with get_raw_db() as conn:
             cursor = conn.cursor()
 
+            # Ensure the pin column exists in users table
+            cursor.execute(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name='users'
+                        AND column_name='pin'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN pin TEXT NULL;
+                    END IF;
+                END $$;
+                """
+            )
+
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS hall_invigilators (
