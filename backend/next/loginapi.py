@@ -48,6 +48,11 @@ class AdminResetWithPassword(BaseModel):
     new_password: str
 
 
+class AdminResetWithBackup(BaseModel):
+    username: str
+    backup_password: str
+
+
 ADMIN_TEMP_PASSWORD = "temporary_password"
 
 
@@ -349,6 +354,77 @@ def admin_forgot_password(data: ResetPassword):
                     "Password reset successful. Log in with temporary_password, "
                     "then create your own password."
                 ),
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/reset-with-backup")
+def admin_reset_with_backup(data: AdminResetWithBackup):
+    """Verify backup password (temporary_password) and reset admin password."""
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT user_id, role, temporary_password
+                FROM users
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (data.username.strip(),),
+            )
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="Admin account not found.")
+
+            role = user["role"] if isinstance(user, dict) else user[1]
+            if role != "admin":
+                raise HTTPException(
+                    status_code=400,
+                    detail="This reset option is only for admin accounts.",
+                )
+
+            stored_temp_password = (
+                user["temporary_password"] if isinstance(user, dict) else user[2]
+            )
+
+            # Verify the backup password matches the stored temporary_password
+            if data.backup_password.strip() != stored_temp_password:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Backup password is incorrect. Please try again.",
+                )
+
+            # Reset the password to temporary_password
+            hashed_password = bcrypt.hashpw(
+                ADMIN_TEMP_PASSWORD.encode("utf-8"),
+                bcrypt.gensalt(),
+            ).decode("utf-8")
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET password=%s,
+                    temporary_password=%s,
+                    first_login=TRUE
+                WHERE LOWER(username) = LOWER(%s);
+                """,
+                (
+                    hashed_password,
+                    ADMIN_TEMP_PASSWORD,
+                    data.username.strip(),
+                ),
+            )
+            conn.commit()
+
+            return {
+                "success": True,
+                "message": "Password reset successfully. You can now log in.",
             }
 
     except HTTPException:

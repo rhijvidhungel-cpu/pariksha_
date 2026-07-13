@@ -8,6 +8,7 @@ const API = "https://pariksha-9qjs.onrender.com";
 export default function ForgotPasswordPage() {
   const [view, setView] = useState<"student" | "admin">("student");
   const [username, setUsername] = useState("");
+  const [backupPassword, setBackupPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,10 +20,13 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/admin/forgot-password`, {
+      const res = await fetch(`${API}/admin/reset-with-backup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({
+          username: username.trim(),
+          backup_password: backupPassword,
+        }),
       });
       const data = await res.json();
 
@@ -31,6 +35,7 @@ export default function ForgotPasswordPage() {
       }
 
       setMessage("Password reset successfully. You can now log in.");
+      setBackupPassword("");
     } catch (err: any) {
       setError(err.message || "Unable to reset admin password.");
     } finally {
@@ -44,7 +49,7 @@ export default function ForgotPasswordPage() {
         <section className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7">
           <h1 className="text-2xl font-extrabold text-gray-900">Reset Admin Password</h1>
           <p className="text-sm text-gray-600 mt-2">
-            Enter your admin email/username to reset your password.
+            Enter your admin email and backup password to reset your account.
           </p>
 
           <form onSubmit={handleAdminReset} className="mt-6 flex flex-col gap-4">
@@ -58,6 +63,20 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
                 placeholder="admin@ku.edu.np"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                Backup Password
+              </label>
+              <input
+                type="password"
+                value={backupPassword}
+                onChange={(e) => setBackupPassword(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-indigo-500"
+                placeholder="Enter your backup password"
                 required
               />
             </div>
@@ -86,6 +105,7 @@ export default function ForgotPasswordPage() {
               onClick={() => {
                 setView("student");
                 setUsername("");
+                setBackupPassword("");
                 setError("");
                 setMessage("");
               }}
