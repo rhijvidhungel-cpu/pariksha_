@@ -12,7 +12,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Admin reset
   async function handleAdminReset(event: React.FormEvent) {
     event.preventDefault();
     setMessage("");
@@ -31,9 +30,7 @@ export default function ForgotPasswordPage() {
         throw new Error(data.detail || "Unable to reset admin password.");
       }
 
-      setMessage(
-        "Password has been reset to 'temporary_password'. Please login and set a new password and PIN."
-      );
+      setMessage("Password reset successfully. You can now log in.");
     } catch (err: any) {
       setError(err.message || "Unable to reset admin password.");
     } finally {
@@ -41,15 +38,13 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  // Admin reset view
   if (view === "admin") {
     return (
       <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-950">
         <section className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-7">
           <h1 className="text-2xl font-extrabold text-gray-900">Reset Admin Password</h1>
           <p className="text-sm text-gray-600 mt-2">
-            Enter your admin email/username. Your password will be reset to{" "}
-            <span className="font-mono font-bold">temporary_password</span>.
+            Enter your admin email/username to reset your password.
           </p>
 
           <form onSubmit={handleAdminReset} className="mt-6 flex flex-col gap-4">
@@ -98,6 +93,13 @@ export default function ForgotPasswordPage() {
             >
               ← Back
             </button>
+
+            <Link
+              href="/"
+              className="text-sm text-indigo-600 hover:text-indigo-800 text-center font-semibold"
+            >
+              Back to Login
+            </Link>
           </form>
         </section>
       </main>
@@ -108,7 +110,6 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
-        {/* "Forgot for Admin?" link at top */}
         <div className="text-right mb-4">
           <button
             onClick={() => setView("admin")}
