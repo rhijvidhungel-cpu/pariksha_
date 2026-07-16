@@ -96,55 +96,27 @@ def reorder_students(students):
 
 def is_valid_seat(student, seat, allocations):
     """
-    Seating rules (smart column-aware separation):
-    1. SAME bench, same row → BLOCKED (regardless of subject)
-       No two students share a desk.
+    Seating rules (maximum utilization):
+    Only one restriction: no two students with the SAME subject_code
+    can sit on the SAME bench.
     
-    2. ADJACENT benches, same row, different subjects → BLOCKED
-       Keeps each subject in contiguous bench blocks.
-       
-    3. ADJACENT benches, same row, SAME subject → only BLOCKED when
-       the seats are "across the aisle" (last seat of one bench is
-       directly next to first seat of the next bench). Otherwise ALLOWED.
-       
-    4. Different rows → always allowed.
+    Everything else is ALLOWED:
+    - Different subjects on the same bench → allowed (saves capacity)
+    - Same subject on adjacent benches → allowed
+    - Different subjects on adjacent benches → allowed
+    - Different rows → always allowed
     """
     for allocated in allocations:
         if allocated["hall_id"] != seat["hall_id"]:
             continue
 
-        # Rule 1: Same bench, same row — always block
+        # Same row, same bench, same subject — block
         if (
             allocated["row_no"] == seat["row_no"]
             and allocated["bench_no"] == seat["bench_no"]
+            and allocated["subject_code"] == student["subject_code"]
         ):
             return False
-
-        # Only remaining check is for adjacent benches in same row
-        if (
-            allocated["row_no"] != seat["row_no"]
-            or abs(allocated["bench_no"] - seat["bench_no"]) != 1
-        ):
-            continue  # different rows or non-adjacent — always fine
-
-        # Different subjects on adjacent benches — block
-        if allocated["subject_code"] != student["subject_code"]:
-            return False
-
-        # Same subject on adjacent benches — block ONLY if across the aisle
-        # (last seat of one bench is right next to first seat of the other)
-        seats_per_bench = seat.get("seats_per_bench", 2)
-        seat_edge = seat["seat_no"]
-        allocated_edge = allocated["seat_no"]
-        
-        # Across-the-aisle: seat 1 of one bench is next to seat N of the other
-        if (seat_edge == 1 and allocated_edge == seats_per_bench) or \
-           (seat_edge == seats_per_bench and allocated_edge == 1):
-            return False
-
-        # Otherwise: same subject, same column positions — separated by the bench width
-        # e.g. Seat-1 of Bench 1 and Seat-1 of Bench 2 → ALLOWED
-        continue
 
     return True
 
