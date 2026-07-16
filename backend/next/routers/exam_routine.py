@@ -101,50 +101,27 @@ async def get_routines(batch: str):
 # ----------------------------
 def normalize_time(time_val):
     """
-    Normalize exam_time values so that different Excel formatting
-    does not create duplicate slots.
-    
-    Examples:
-      "10:00-12:00"    -> "10:00-12:00"
-      "10:00 - 12:00"  -> "10:00-12:00"
-      "10:00-12:00 "   -> "10:00-12:00"
-      " 10:00-12:00"   -> "10:00-12:00"
+    Normalize exam_time: strip whitespace and standardize spaces around dashes
+    so "10:00 AM - 12:00 PM" and "10:00 AM-12:00 PM" become the same slot.
     """
-    if not time_val or str(time_val).strip() == "":
+    if pd.isna(time_val):
         return ""
     
-    # Convert to string and strip
     s = str(time_val).strip()
+    if not s:
+        return ""
     
-    # Normalize spaces around hyphens
-    # Replace " - " with "-", " -" with "-", "- " with "-"
+    # Normalize spaces around hyphens/dashes: "10:00 - 12:00" -> "10:00-12:00"
     import re
     s = re.sub(r'\s*-\s*', '-', s)
+    
+    # Normalize spaces after AM/PM: "10:00AM" -> "10:00 AM"
+    s = re.sub(r'(\d)([AaPp][Mm])', r'\1 \2', s)
     
     # Collapse multiple spaces
     s = re.sub(r'\s+', ' ', s)
     
     return s
-
-
-def convert_excel_date(value):
-    if pd.isna(value):
-        return None
-
-    # Excel serial number
-    if isinstance(value, (int, float)):
-        return pd.to_datetime(
-            value,
-            unit="D",
-            origin="1899-12-30"
-        ).date()
-
-    # Already a datetime
-    if isinstance(value, pd.Timestamp):
-        return value.date()
-
-    # Normal string
-    return pd.to_datetime(value).date()
 
 
 @router.post("/bulk")
@@ -180,19 +157,33 @@ async def upload_routine(
         if "Time" not in df.columns:
             df["Time"] = ""
 
+        # ----------------------------
+        # Convert Excel dates
+        # ----------------------------
+        def convert_excel_date(value):
+
+            if pd.isna(value):
+                return None
+
+            # Excel serial number
+            if isinstance(value, (int, float)):
+                return pd.to_datetime(
+                    value,
+                    unit="D",
+                    origin="1899-12-30"
+                ).date()
+
+            # Already a datetime
+            if isinstance(value, pd.Timestamp):
+                return value.date()
+
+            # Normal string
+            return pd.to_datetime(value).date()
+
         df["Date"] = df["Date"].apply(convert_excel_date)
         
         # Normalize the time column
         df["Time"] = df["Time"].apply(normalize_time)
-
-        # Filter out rows with invalid dates
-        df = df[df["Date"].notna()]
-
-        if df.empty:
-            raise HTTPException(
-                status_code=400,
-                detail="No valid rows found in the uploaded file."
-            )
 
         with get_raw_db() as conn:
 
@@ -248,8 +239,6 @@ async def upload_routine(
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=400, detail=str(e))
-
-
 @router.get("/sessions")
 def get_sessions():
     with get_raw_db() as conn:
@@ -257,10 +246,9 @@ def get_sessions():
 
         cursor.execute("""
             SELECT DISTINCT
-                TRIM(exam_date) AS exam_date,
-                TRIM(exam_time) AS exam_time
+                exam_date,
+                exam_time
             FROM exam_routines
-            WHERE exam_date IS NOT NULL
             ORDER BY exam_date, exam_time;
         """)
 
