@@ -103,16 +103,41 @@ def normalize_time(time_val):
     """
     Normalize exam_time: strip whitespace and standardize spaces around dashes
     so "10:00 AM - 12:00 PM" and "10:00 AM-12:00 PM" become the same slot.
+    Also handles Excel serial dates (pd.Timestamp) that appear when Excel
+    stores a time-only cell as a datetime.
     """
     if pd.isna(time_val):
         return ""
+    
+    # Handle Excel serial date / pd.Timestamp (e.g. 1899-12-30 10:00:00)
+    if isinstance(time_val, pd.Timestamp):
+        # Extract just the time portion as HH:MM AM/PM
+        return time_val.strftime("%I:%M %p").lstrip("0")
     
     s = str(time_val).strip()
     if not s:
         return ""
     
-    # Normalize spaces around hyphens/dashes: "10:00 - 12:00" -> "10:00-12:00"
     import re
+    
+    # Detect if this is a date-like string (e.g. "1899-12-30" with or without a time)
+    date_match = re.match(r'^\d{4}-\d{2}-\d{2}(\s|T)(\d{2}:\d{2})', s)
+    if date_match:
+        # Extract the time part: HH:MM -> convert to 12-hour with AM/PM
+        time_part = date_match.group(2)
+        try:
+            hours, minutes = time_part.split(":")
+            h = int(hours)
+            ampm = "AM" if h < 12 else "PM"
+            if h == 0:
+                h = 12
+            elif h > 12:
+                h -= 12
+            return f"{h}:{minutes} {ampm}"
+        except:
+            pass
+    
+    # Normalize spaces around hyphens/dashes: "10:00 - 12:00" -> "10:00-12:00"
     s = re.sub(r'\s*-\s*', '-', s)
     
     # Normalize spaces after AM/PM: "10:00AM" -> "10:00 AM"
