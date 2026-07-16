@@ -66,6 +66,11 @@ def generate_room_seats(room):
 
 
 def reorder_students(students):
+    """
+    Interleave students by subject_code so same-code students
+    are spread out across the ordering. This gives the seating
+    algorithm a better chance to place them without violations.
+    """
     groups = defaultdict(list)
 
     for student in students:
@@ -88,21 +93,33 @@ def reorder_students(students):
 
 
 def is_valid_seat(student, seat, allocations):
+    """
+    Seating rules:
+    1. Same subject_code CANNOT share the same bench.
+    2. Same subject_code CANNOT sit on adjacent benches in the same row
+       (e.g. rightmost seat of Bench 1 and leftmost seat of Bench 2
+       cannot have the same code).
+    3. Different rows are fine — no adjacent-row restriction.
+       This prevents empty seats caused by overly strict vertical rules.
+    """
     for allocated in allocations:
         if allocated["hall_id"] != seat["hall_id"]:
             continue
 
+        if allocated["subject_code"] != student["subject_code"]:
+            continue
+
+        # Rule 1: Same bench — block
         if (
             allocated["row_no"] == seat["row_no"]
             and allocated["bench_no"] == seat["bench_no"]
-            and allocated["subject_code"] == student["subject_code"]
         ):
             return False
 
+        # Rule 2: Adjacent benches (left or right) in same row — block
         if (
-            allocated["bench_no"] == seat["bench_no"]
-            and abs(allocated["row_no"] - seat["row_no"]) == 1
-            and allocated["subject_code"] == student["subject_code"]
+            allocated["row_no"] == seat["row_no"]
+            and abs(allocated["bench_no"] - seat["bench_no"]) == 1
         ):
             return False
 
