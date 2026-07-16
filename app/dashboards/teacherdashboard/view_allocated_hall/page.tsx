@@ -76,7 +76,6 @@ export default function TeacherAllocatedHallPage() {
     );
   }, [assignments, sessionSearch]);
 
-  // Print only the attendance sheet in A4 format
   function printAttendanceOnly() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -140,10 +139,10 @@ export default function TeacherAllocatedHallPage() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#111827]">
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Selection Controls */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm p-6">
-          <h1 className="text-2xl font-extrabold text-[#111827]">My Allocated Exam Hall</h1>
+        <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm p-4 md:p-6">
+          <h1 className="text-xl md:text-2xl font-extrabold text-[#111827]">My Allocated Exam Hall</h1>
           <p className="text-sm text-[#6B7280] mt-1">
             View assigned invigilation halls and attendance sheets.
           </p>
@@ -175,7 +174,7 @@ export default function TeacherAllocatedHallPage() {
                     ) || null
                   );
                 }}
-                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm min-w-[260px]"
+                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm w-full sm:min-w-[260px]"
               >
                 {filteredAssignments.map((item) => (
                   <option
@@ -197,7 +196,7 @@ export default function TeacherAllocatedHallPage() {
         {hall && (
           <div className="flex flex-col gap-6 mt-6">
             {/* Hall View Button */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowHallFull(!showHallFull)}
                 className="bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg px-6 py-3 text-sm font-bold transition-colors"
@@ -214,15 +213,15 @@ export default function TeacherAllocatedHallPage() {
 
             {/* Full Hall Layout */}
             {showHallFull && (
-              <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm overflow-auto w-full">
+              <section className="bg-white border border-[#E5E7EB] rounded-xl p-4 md:p-6 shadow-sm overflow-auto w-full">
                 <h2 className="text-lg font-bold mb-4 text-[#111827]">Hall Layout: {hall.room_no}</h2>
                 {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
-                  <div key={rowIndex} className="flex items-center gap-4 mb-5">
-                    <div className="w-16 font-bold text-[#4F46E5]">Row {rowIndex + 1}</div>
+                  <div key={rowIndex} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-5 min-w-fit">
+                    <div className="w-20 font-bold text-[#4F46E5] shrink-0">Row {rowIndex + 1}</div>
                     {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
                       <div
                         key={benchIndex}
-                        className="flex border-2 border-[#1F2937] rounded-lg p-3 bg-white"
+                        className="flex border-2 border-[#1F2937] rounded-lg p-2 md:p-3 bg-white"
                       >
                         {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
                           const allocation = seatMap.get(
@@ -231,16 +230,16 @@ export default function TeacherAllocatedHallPage() {
                           return (
                             <div
                               key={seatIndex}
-                              className={`w-24 min-h-20 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
+                              className={`w-16 md:w-24 min-h-[4rem] md:min-h-20 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
                                 allocation ? "bg-emerald-100 border-emerald-700" : "bg-slate-100 border-slate-300"
                               }`}
                             >
                               {allocation ? (
                                 <>
-                                  <div>{allocation.full_name || allocation.student_id}</div>
-                                  <div>{allocation.batch_name}</div>
-                                  <div>{allocation.subject_code}</div>
-                                  <div>S{allocation.seat_no}</div>
+                                  <div className="text-[9px] leading-tight text-center">{allocation.full_name || allocation.student_id}</div>
+                                  <div className="text-[9px]">{allocation.batch_name}</div>
+                                  <div className="text-[9px]">{allocation.subject_code}</div>
+                                  <div className="text-[9px]">S{allocation.seat_no}</div>
                                 </>
                               ) : (
                                 <>S{seatIndex + 1}</>
@@ -257,10 +256,10 @@ export default function TeacherAllocatedHallPage() {
 
             {/* Attendance Sheet Section */}
             {showAttendanceSheet && (
-              <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E5E7EB] rounded-xl p-4 md:p-6 shadow-sm">
                 <h2 className="text-lg font-bold mb-4 text-[#111827]">Attendance Sheet</h2>
                 <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm min-w-[500px]">
                     <thead className="bg-[#F9FAFB] text-[#6B7280] uppercase text-xs">
                       <tr>
                         <th className="p-3 font-semibold">Student</th>

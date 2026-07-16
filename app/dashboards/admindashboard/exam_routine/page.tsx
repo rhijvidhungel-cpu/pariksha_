@@ -78,14 +78,14 @@ export default function AdminRoutinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] py-8 px-6">
+    <div className="min-h-screen bg-[#f5f7fb] py-6 md:py-8 px-4 md:px-6">
 
       <div className="max-w-6xl mx-auto">
                 {/* Header Card */}
 
-        <div className="bg-white rounded-2xl border border-gray-300 shadow-md px-8 py-6">
+        <div className="bg-white rounded-2xl border border-gray-300 shadow-md px-6 md:px-8 py-6">
 
-          <h1 className="text-3xl font-extrabold text-[#1f2940] uppercase">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#1f2940] uppercase">
             Upload Examination Routine
           </h1>
 
@@ -93,7 +93,7 @@ export default function AdminRoutinePage() {
 
         {/* Upload Card */}
 
-        <div className="bg-white rounded-3xl border border-gray-300 shadow-md max-w-3xl mx-auto mt-10 p-10">
+        <div className="bg-white rounded-3xl border border-gray-300 shadow-md max-w-3xl mx-auto mt-8 md:mt-10 p-6 md:p-10">
 
           {/* Batch */}
 
@@ -106,7 +106,7 @@ export default function AdminRoutinePage() {
             <select
               value={batch}
               onChange={(e) => setBatch(e.target.value)}
-              className="w-full border rounded-xl px-4 py-4 text-lg focus:ring-2 focus:ring-blue-500 outline-none text-black font-semibold"
+              className="w-full border rounded-xl px-4 py-3 md:py-4 text-base md:text-lg focus:ring-2 focus:ring-blue-500 outline-none text-black font-semibold"
             >
               {batches.map((b) => (
                 <option key={b} value={b}>
@@ -121,7 +121,7 @@ export default function AdminRoutinePage() {
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="mt-8 border-2 border-dashed border-gray-300 rounded-2xl p-16 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+            className="mt-8 border-2 border-dashed border-gray-300 rounded-2xl p-8 md:p-16 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
           >
 
             <input
@@ -134,15 +134,15 @@ export default function AdminRoutinePage() {
 
             <div className="flex flex-col items-center">
 
-              <div className="text-7xl">
+              <div className="text-5xl md:text-7xl">
                 📊
               </div>
 
-              <h2 className="mt-5 text-3xl font-bold text-[#24324d]">
-                Click to Upload Routine in Excel Format
+              <h2 className="mt-4 md:mt-5 text-xl md:text-3xl font-bold text-[#24324d] text-center">
+                Click to Upload Routine
               </h2>
 
-              <p className="mt-3 text-gray-500 text-lg">
+              <p className="mt-3 text-gray-500 text-sm md:text-lg">
                 Supports .xlsx and .xls files
               </p>
 
@@ -154,21 +154,21 @@ export default function AdminRoutinePage() {
 
           {file && (
 
-            <div className="mt-8 bg-[#eef2ff] rounded-2xl p-6 flex justify-between items-center">
+            <div className="mt-8 bg-[#eef2ff] rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-4 md:gap-5">
 
-                <div className="text-5xl">
+                <div className="text-4xl md:text-5xl">
                   📄
                 </div>
 
-                <div>
+                <div className="min-w-0">
 
-                  <h3 className="font-bold text-xl text-[#24324d]">
+                  <h3 className="font-bold text-base md:text-xl text-[#24324d] break-all">
                     {file.name}
                   </h3>
 
-                  <p className="text-blue-600 mt-1">
+                  <p className="text-blue-600 mt-1 text-sm">
                     Status : Ready to Upload
                   </p>
 
@@ -178,7 +178,7 @@ export default function AdminRoutinePage() {
 
               <button
                 onClick={removeFile}
-                className="border border-red-400 text-red-600 px-5 py-3 rounded-lg hover:bg-red-50 transition"
+                className="border border-red-400 text-red-600 px-4 md:px-5 py-2.5 md:py-3 rounded-lg hover:bg-red-50 transition text-sm shrink-0"
               >
                 Remove File
               </button>
@@ -192,7 +192,7 @@ export default function AdminRoutinePage() {
           <button
             onClick={uploadRoutine}
             disabled={loading}
-            className="mt-10 w-full bg-[#5668f5] hover:bg-[#4055eb] transition text-white font-bold py-5 rounded-2xl text-lg disabled:bg-gray-400"
+            className="mt-8 md:mt-10 w-full bg-[#5668f5] hover:bg-[#4055eb] transition text-white font-bold py-4 md:py-5 rounded-2xl text-base md:text-lg disabled:bg-gray-400"
           >
             {loading
               ? "Uploading..."

@@ -1,4 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pariksha — Smart Web-Based Examination Management System
+
+A comprehensive web-based examination management system with intelligent seat allocation, built with Next.js 15, React.js, and FastAPI.
+
+---
+
+## System Requirements
+
+### Software Requirements
+
+| Component | Requirement |
+|-----------|-------------|
+| **Operating System** | Windows 10/11, Linux, or macOS |
+| **Frontend Framework** | Next.js 15 with React.js |
+| **Backend Framework** | FastAPI (Python 3.10 or above) |
+| **Database Management System** | PostgreSQL |
+| **Runtime Environment** | Node.js 18 or above |
+| **Development Environment** | Visual Studio Code |
+| **API Documentation & Testing** | Swagger UI |
+| **Version Control** | Git and GitHub |
+
+### Hardware Requirements
+
+| Component | Minimum Requirement |
+|-----------|---------------------|
+| **Processor** | Intel Core i3 or equivalent (2.0 GHz or higher) |
+| **RAM** | 4 GB or higher |
+| **Storage** | Minimum 2 GB free disk space |
+| **Display** | 1366 × 768 resolution or higher |
+| **Network** | Stable internet connection |
+| **Input Devices** | Keyboard and mouse |
+
+---
 
 ## Getting Started
 

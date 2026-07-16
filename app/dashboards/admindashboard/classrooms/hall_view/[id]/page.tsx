@@ -126,14 +126,14 @@ export default function AdminHallView() {
     return map;
   }, [hall]);
 
-  if (!roomId) return <div className="p-8 text-[#111827]">Invalid Room ID</div>;
+  if (!roomId) return <div className="p-4 md:p-8 text-[#111827]">Invalid Room ID</div>;
 
   return (
     <div className="text-[#111827]">
-      <section className="bg-white border border-[#E5E7EB] rounded-xl p-6 shadow-sm">
+      <section className="bg-white border border-[#E5E7EB] rounded-xl p-4 md:p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#111827]">
+            <h1 className="text-xl md:text-2xl font-extrabold text-[#111827]">
               Room: {hall?.room_no || roomId}
             </h1>
             {hall && (
@@ -152,7 +152,7 @@ export default function AdminHallView() {
               <select
                 value={selectedSession}
                 onChange={(event) => setSelectedSession(event.target.value)}
-                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[220px]"
+                className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[200px] w-full"
               >
                 {sessions.map((session, index) => (
                   <option
@@ -173,7 +173,7 @@ export default function AdminHallView() {
                 <select
                   value={selectedTeacherId}
                   onChange={(event) => setSelectedTeacherId(event.target.value)}
-                  className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[200px]"
+                  className="border border-[#D1D5DB] rounded-lg px-4 py-3 text-sm bg-white min-w-[180px] w-full"
                 >
                   <option value="">Select teacher</option>
                   {teachers.map((teacher) => (
@@ -192,7 +192,7 @@ export default function AdminHallView() {
               </div>
               {assignedTeacher?.full_name && (
                 <p className="text-xs text-emerald-700 font-semibold mt-2">
-                  Current invigilator: {assignedTeacher.full_name} ({assignedTeacher.email})
+                  Current: {assignedTeacher.full_name} ({assignedTeacher.email})
                 </p>
               )}
             </div>
@@ -204,12 +204,12 @@ export default function AdminHallView() {
         ) : hall ? (
           <div className="overflow-auto w-full">
             {Array.from({ length: hall.rows_count }).map((_, rowIndex) => (
-              <div key={rowIndex} className="flex items-center gap-5 mb-6">
-                <div className="w-20 font-bold text-[#4F46E5]">Row {rowIndex + 1}</div>
+              <div key={rowIndex} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6 min-w-fit">
+                <div className="w-20 font-bold text-[#4F46E5] shrink-0">Row {rowIndex + 1}</div>
                 {Array.from({ length: hall.benches_per_row }).map((_, benchIndex) => (
                   <div
                     key={benchIndex}
-                    className="flex border-2 border-[#1F2937] rounded-lg p-4 bg-white"
+                    className="flex border-2 border-[#1F2937] rounded-lg p-2 md:p-4 bg-white"
                   >
                     {Array.from({ length: hall.seats_per_bench }).map((_, seatIndex) => {
                       const allocation = seatMap.get(
@@ -218,16 +218,16 @@ export default function AdminHallView() {
                       return (
                         <div
                           key={seatIndex}
-                          className={`w-28 min-h-24 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
+                          className={`w-20 md:w-28 min-h-[5rem] md:min-h-24 border-2 m-1 p-1 text-[10px] font-bold flex flex-col items-center justify-center ${
                             allocation ? "bg-emerald-100 border-emerald-700" : "bg-slate-100 border-slate-300"
                           }`}
                         >
                           {allocation ? (
                             <>
-                              <div>{allocation.full_name || allocation.student_id}</div>
-                              <div>{allocation.batch_name}</div>
-                              <div>{allocation.subject_code}</div>
-                              <div>S{allocation.seat_no}</div>
+                              <div className="text-[9px] leading-tight text-center">{allocation.full_name || allocation.student_id}</div>
+                              <div className="text-[9px]">{allocation.batch_name}</div>
+                              <div className="text-[9px]">{allocation.subject_code}</div>
+                              <div className="text-[9px]">S{allocation.seat_no}</div>
                             </>
                           ) : (
                             <>S{seatIndex + 1}</>

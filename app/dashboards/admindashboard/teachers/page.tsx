@@ -216,10 +216,10 @@ export default function TeachersManagement() {
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
         <div>
-          <h2 className="text-lg font-extrabold text-[#111827] uppercase tracking-wide m-0">
-            TEACHER DIRECTORY CONTROL SYSTEM
+          <h2 className="text-base md:text-lg font-extrabold text-[#111827] uppercase tracking-wide m-0">
+            TEACHERS DIRECTORY
           </h2>
           <p className="text-xs text-gray-500 m-0 mt-1">
             Add, remove and edit teacher details.
@@ -229,7 +229,7 @@ export default function TeachersManagement() {
 
       {statusMsg && (
         <div
-          className={`p-4 rounded-xl text-xs font-bold border mt-4 ${
+          className={`p-4 rounded-xl text-xs font-bold border ${
             statusMsg.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-800"
               : "bg-rose-50 border-rose-200 text-rose-800"
@@ -239,10 +239,10 @@ export default function TeachersManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 lg:col-span-4 shadow-sm">
           <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase m-0 mb-5">
-            Add New Faculty Profile Manually
+            Add New Faculty Profile
           </h3>
           <form onSubmit={handleManualInsertSubmit} className="flex flex-col gap-4">
             <div>
@@ -300,7 +300,7 @@ export default function TeachersManagement() {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl lg:col-span-8 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-100 bg-gray-50/50">
+          <div className="p-4 md:p-5 border-b border-gray-100 bg-gray-50/50">
             <input
               type="text"
               value={searchQuery}
@@ -311,14 +311,14 @@ export default function TeachersManagement() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse m-0">
+            <table className="w-full text-left border-collapse m-0 min-w-[550px]">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-400 text-[11px] font-extrabold uppercase bg-gray-50/30">
-                  <th className="py-3 px-5 text-center">S.N.</th>
-                  <th className="py-3 px-4">Faculty Name</th>
-                  <th className="py-3 px-4">Email / Username</th>
-                  <th className="py-3 px-4">Department</th>
-                  <th className="py-3 px-4 text-center w-[140px]">Actions</th>
+                  <th className="py-3 px-3 md:px-5 text-center">S.N.</th>
+                  <th className="py-3 px-3 md:px-4">Faculty Name</th>
+                  <th className="py-3 px-3 md:px-4">Email / Username</th>
+                  <th className="py-3 px-3 md:px-4">Department</th>
+                  <th className="py-3 px-3 md:px-4 text-center w-[120px]">Actions</th>
                 </tr>
               </thead>
 
@@ -332,33 +332,35 @@ export default function TeachersManagement() {
                 ) : filteredTeachers.length > 0 ? (
                   filteredTeachers.map((teacher, index) => (
                     <tr key={teacher.id || index} className="hover:bg-gray-50/60">
-                      <td className="py-3 px-5 font-mono text-xs text-gray-400 text-center">
+                      <td className="py-3 px-3 md:px-5 font-mono text-xs text-gray-400 text-center">
                         {index + 1}
                       </td>
-                      <td className="py-3 px-4 font-bold text-gray-900">
+                      <td className="py-3 px-3 md:px-4 font-bold text-gray-900">
                         {teacher.name}
                       </td>
-                      <td className="py-3 px-4 font-mono text-xs text-gray-600">
+                      <td className="py-3 px-3 md:px-4 font-mono text-xs text-gray-600">
                         {teacher.email}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3 md:px-4">
                         <span className="text-[10px] font-extrabold px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 uppercase">
                           {teacher.department}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-center flex justify-center gap-3">
-                        <button
-                          onClick={() => startEdit(teacher)}
-                          className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-xs font-extrabold cursor-pointer uppercase"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleRemoveTeacher(teacher.id)}
-                          className="bg-transparent border-none text-red-500 hover:text-red-700 text-xs font-extrabold cursor-pointer uppercase"
-                        >
-                          Remove
-                        </button>
+                      <td className="py-3 px-3 md:px-4 text-center">
+                        <div className="flex justify-center gap-2 md:gap-3">
+                          <button
+                            onClick={() => startEdit(teacher)}
+                            className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-xs font-extrabold cursor-pointer uppercase"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleRemoveTeacher(teacher.id)}
+                            className="bg-transparent border-none text-red-500 hover:text-red-700 text-xs font-extrabold cursor-pointer uppercase"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -376,8 +378,8 @@ export default function TeachersManagement() {
       </div>
 
       {editingTeacher && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md border border-gray-200 shadow-xl mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-4 md:p-6 w-full max-w-md border border-gray-200 shadow-xl mx-4">
             <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide mb-4">
               Edit Faculty Details
             </h3>

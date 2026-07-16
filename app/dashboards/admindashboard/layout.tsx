@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [students, setStudents] = useState<any[]>([]);
   const [batches, setBatches] = useState<string[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Notification form state
   const [notifType, setNotifType] = useState("all_students");
@@ -26,6 +27,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Search state for dropdowns
   const [teacherSearch, setTeacherSearch] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const name = localStorage.getItem("username");
@@ -104,7 +110,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   function getTargetLabel(notif: any): string {
-    // Resolve student/teacher IDs to full details
     let targetLabel = notif.target_id || "N/A";
     if (notif.type === "single_student") {
       const found = students.find((s: any) => String(s.sn || s.student_id) === String(notif.target_id));
@@ -174,7 +179,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return baseClass + "font-medium text-[#C7D2FE] hover:bg-white/5";
   };
 
-  // Filtered students/teachers based on search
   const filteredStudents = useMemo(() => {
     if (!studentSearch.trim()) return students;
     const q = studentSearch.toLowerCase();
@@ -193,7 +197,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }, [teachers, teacherSearch]);
 
-  // Format date/time nicely in Nepal Time (Asia/Katmandu)
   function formatDateTime(dateStr: string): string {
     if (!dateStr) return "";
     try {
@@ -220,13 +223,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       
-      {/* SIDEBAR PANEL */}
-      <aside className="w-[260px] bg-[#2E1A47] text-white flex flex-col justify-between p-6 fixed top-0 left-0 h-screen shrink-0 shadow-xl z-10 select-none">
-        <div className="flex flex-col gap-6">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR PANEL - Responsive */}
+      <aside className={`
+        w-[260px] bg-[#2E1A47] text-white flex flex-col justify-between p-6 fixed top-0 left-0 h-screen shrink-0 shadow-xl z-40 select-none
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:fixed
+      `}>
+        <div className="flex flex-col gap-6 sidebar-scrollable">
           <div className="pb-6 border-b border-white/10 mb-2">
-            <h1 className="text-[22px] font-extrabold tracking-wide m-0 bg-gradient-to-r from-[#6366F1] to-[#80f755] bg-clip-text text-transparent">
-              PARIKSHA
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-[22px] font-extrabold tracking-wide m-0 bg-gradient-to-r from-[#6366F1] to-[#80f755] bg-clip-text text-transparent">
+                PARIKSHA
+              </h1>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="md:hidden bg-transparent border-none text-white/60 hover:text-white cursor-pointer text-xl"
+              >
+                ✕
+              </button>
+            </div>
             <p className="text-[10px] text-[#A5B4FC] font-semibold tracking-wider mt-1 uppercase m-0">Admin Control Desk</p>
           </div>
           
@@ -255,7 +279,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 mt-4">
           <button
             onClick={() => setShowNotificationModal(true)}
             className="flex items-center justify-center gap-2 w-full bg-indigo-500/10 border border-indigo-500/20 text-[#A5B4FC] rounded-lg py-2.5 text-xs font-medium hover:bg-indigo-500/20 transition-colors cursor-pointer"
@@ -290,25 +314,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* CORE FRAME LAYOUT */}
-      <div className="flex-1 flex flex-col pl-[260px] min-w-0">
+      <div className="flex-1 flex flex-col md:pl-[260px] pl-0 min-w-0 w-full">
         
         {/* TOP HEADER PANEL */}
-        <header className="h-[70px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-8 sticky top-0 z-50">
+        <header className="h-[70px] bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 md:px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
-            <button className="text-gray-500 hover:text-gray-700 p-1 bg-transparent border-none cursor-pointer" aria-label="Menu Toggle">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-gray-500 hover:text-gray-700 p-1 bg-transparent border-none cursor-pointer" 
+              aria-label="Menu Toggle"
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="4" y1="12" x2="20" y2="12" />
                 <line x1="4" y1="6" x2="20" y2="6" />
                 <line x1="4" y1="18" x2="20" y2="18" />
               </svg>
             </button>
-            <div>
+            <button className="hidden md:block text-gray-500 hover:text-gray-700 p-1 bg-transparent border-none cursor-pointer" aria-label="Menu Toggle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg>
+            </button>
+            <div className="hidden sm:block">
               <h2 className="text-base font-extrabold text-[#111827] uppercase tracking-wide m-0">PARIKSHA</h2>
               <p className="text-[11px] text-[#6B7280] font-medium uppercase tracking-wider m-0">Admin's Portal</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 md:gap-5">
             {/* Notification Bell with Dropdown */}
             <div className="relative">
               <button
@@ -325,7 +360,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </svg>
               </button>
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-96 overflow-y-auto z-50">
+                <div className="absolute right-0 mt-2 w-72 md:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-96 overflow-y-auto z-50">
                   <div className="p-3 border-b border-slate-100">
                     <h3 className="text-sm font-bold text-[#111827]">Notifications ({notifications.length})</h3>
                   </div>
@@ -344,7 +379,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
             </div>
 
-            <div className="w-px h-7 bg-[#E5E7EB]" />
+            <div className="w-px h-7 bg-[#E5E7EB] hidden sm:block" />
 
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-[#EEF2F6] flex items-center justify-center text-[#4F46E5] font-bold text-sm border border-gray-100">
@@ -359,15 +394,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* INNER DYNAMIC VIEW AREA */}
-        <main className="p-8 flex flex-col gap-6 w-full max-w-[1400px]">
+        <main className="p-4 md:p-8 flex flex-col gap-6 w-full max-w-[1400px]">
           {children}
         </main>
       </div>
 
       {/* Notification Modal */}
       {showNotificationModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-4 md:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-extrabold text-[#111827]">Send Notification</h2>
               <button
@@ -430,7 +465,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {notifType === "single_student" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Select Student</label>
-                  {/* Search bar for students */}
                   <input
                     type="text"
                     value={studentSearch}
@@ -460,7 +494,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {notifType === "single_teacher" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Select Teacher</label>
-                  {/* Search bar for teachers */}
                   <input
                     type="text"
                     value={teacherSearch}

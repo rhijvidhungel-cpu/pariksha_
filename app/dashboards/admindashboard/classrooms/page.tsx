@@ -17,10 +17,10 @@ export interface StudentRoster {
 export interface ExamRoom {
   id: string | number;
   name: string;
-  rows_count: number;       // Number of rows of benches
-  benches_per_row: number;  // Benches lined up horizontally per row
-  seats_per_bench: number;  // Students sitting at one bench
-  capacity: number;         // Total Capacity = rows * benches * seats
+  rows_count: number;
+  benches_per_row: number;
+  seats_per_bench: number;
+  capacity: number;
   allocatedStudentsCount: number;
   status: "Available" | "Full";
 }
@@ -29,33 +29,26 @@ export default function ClassroomsManagement() {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://pariksha-9qjs.onrender.com";
 
-  // State Management
   const [rooms, setRooms] = useState<ExamRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<ExamRoom | null>(null);
   const [roster, setRoster] = useState<StudentRoster[]>([]);
-  
-  // Loading & UX States
   const [loading, setLoading] = useState(true);
   const [allocating, setAllocating] = useState(false);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Form Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<ExamRoom | null>(null);
 
-  // Form Fields
   const [roomName, setRoomName] = useState("");
   const [rowsCount, setRowsCount] = useState(5);
   const [benchesPerRow, setBenchesPerRow] = useState(3);
   const [seatsPerBench, setSeatsPerBench] = useState(2);
 
-  // Calculate Capacity helper
   const calculatedCapacity = rowsCount * benchesPerRow * seatsPerBench;
 
-  // Authorization Security Guard
   useEffect(() => {
     const name = localStorage.getItem("username");
     const role = localStorage.getItem("role");
@@ -76,7 +69,6 @@ const fetchRooms = async () => {
     if (res.ok) {
       const data = await res.json();
       
-      // Map the backend data to the structure your UI expects
 const formattedRooms: ExamRoom[] = data.map((room: any) => ({
     id: room.hall_id,
     name: room.room_no,
@@ -98,18 +90,15 @@ const formattedRooms: ExamRoom[] = data.map((room: any) => ({
   }
 };
 
-  // Fetch roster & seating layout for a single room
   const handleViewRoomDetails = (room: ExamRoom) => {
   router.push(`/dashboards/admindashboard/classrooms/hall_view/${room.id}`);
 };
 
-  // Create room handler
 const handleCreateRoom = async (e: React.FormEvent) => {
   e.preventDefault();
   setErrorMessage(null);
   setSuccessMessage(null);
 
-  // 1. Calculate values locally
   const calculatedCapacity = rowsCount * benchesPerRow * seatsPerBench;
   const calculatedTables = rowsCount * benchesPerRow;
 
@@ -131,9 +120,8 @@ const handleCreateRoom = async (e: React.FormEvent) => {
       const result = await res.json();
       setSuccessMessage("Room structure recorded successfully!");
 
-      // 2. Create the new room object to match your ExamRoom interface
       const newRoom: ExamRoom = {
-        id: result.hall_id, // Ensure your backend returns the ID
+        id: result.hall_id,
         name: roomName,
         rows_count: rowsCount,
         benches_per_row: benchesPerRow,
@@ -143,13 +131,9 @@ const handleCreateRoom = async (e: React.FormEvent) => {
         status: 'Available'
       };
 
-      // 3. Update state instantly so the UI refreshes
       setRooms((prevRooms) => [...prevRooms, newRoom]);
-      
-      // 4. Close the modal
       setShowAddModal(false); 
     } else {
-      // If the server returns an error, extract the message
       const errorData = await res.json();
       throw new Error(errorData.detail || "Failed to save room structure.");
     }
@@ -158,7 +142,6 @@ const handleCreateRoom = async (e: React.FormEvent) => {
   }
 };
 
-  // Open edit modal
   const openEditModal = (room: ExamRoom) => {
     setEditingRoom(room);
     setRoomName(room.name);
@@ -168,7 +151,6 @@ const handleCreateRoom = async (e: React.FormEvent) => {
     setShowEditModal(true);
   };
 
-  // Update room handler
   const handleUpdateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRoom) return;
@@ -176,12 +158,11 @@ const handleCreateRoom = async (e: React.FormEvent) => {
     setSuccessMessage(null);
 
     try {
-      // Around line 161
-const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added trailing slash
+const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, {
   method: "PUT",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    room_no: roomName,           // Corrected key
+    room_no: roomName,
     rows_count: rowsCount,
     benches_per_row: benchesPerRow,
     seats_per_bench: seatsPerBench,
@@ -207,7 +188,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
     }
   };
 
-  // Delete room handler
   const handleDeleteRoom = async (roomId: string | number) => {
     if (!confirm("Are you sure you want to delete this room layout? This will clear all allocations inside this room.")) return;
     setErrorMessage(null);
@@ -230,7 +210,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
     }
   };
 
-  // Auto-allocate students handler
   const handleAutoAllocate = async () => {
     if (!confirm("This will overwrite and re-distribute ALL student seat assignments randomly. Proceed?")) return;
     setErrorMessage(null);
@@ -254,15 +233,12 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
     }
   };
 
-  // Render Seating Grid Layout
   const renderVisualGrid = () => {
     if (!selectedRoom) return null;
     const { rows_count, benches_per_row, seats_per_bench } = selectedRoom;
 
-    // Map roster to speed up lookups
     const seatMap: Record<string, StudentRoster> = {};
     roster.forEach((student) => {
-      // Seat format in DB allocation routine is e.g. "R1-B2-S1"
       seatMap[student.seatNumber] = student;
     });
 
@@ -288,7 +264,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
               <div className="text-[10px] opacity-70 mb-0.5">{`Seat S${s}`}</div>
               <div className="font-mono truncate">{isOccupied ? student.name.split(" ")[0] : "Empty"}</div>
               
-              {/* Premium Hover Card */}
               {isOccupied && (
                 <div className="absolute z-25 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[11px] p-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-left pointer-events-none">
                   <div className="font-bold border-b border-gray-700 pb-1 mb-1 text-xs">{student.name}</div>
@@ -335,8 +310,8 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
       {/* HEADER BREADCRUMB */}
       <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">Smart Seat Allocation Wizard</h1>
-          <p className="text-xs text-gray-500">Configure examination room desk blueprints and run automatic seating assignments.</p>
+          <h1 className="text-lg md:text-xl font-black text-gray-900 tracking-tight uppercase">Smart Seat Allocation</h1>
+          <p className="text-xs text-gray-500">Configure rooms and run seating assignments.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -349,7 +324,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
         </div>
       </div>
 
-      {/* ERROR & SUCCESS MESSAGES */}
       {errorMessage && (
         <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs">
           ⚠️ {errorMessage}
@@ -361,7 +335,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
         </div>
       )}
 
-      {/* LOADING SPINNER FOR INITIAL LOAD */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 text-gray-500 gap-3">
           <svg className="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -373,7 +346,6 @@ const res = await fetch(`${apiBaseUrl}/rooms/${editingRoom.id}/`, { // Added tra
       ) : (
         <div className="w-full">
           
-          {/* LEFT: ROOMS LIST CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <h2 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-1 col-span-full">Room Registries ({rooms.length})</h2>
             
@@ -401,13 +373,12 @@ onClick={() =>
                     <div>
                       <h3 className="font-bold text-gray-900 text-base mb-1 truncate pr-20">{room.name}</h3>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 font-medium">
-                        <span>{`Layout: ${room.rows_count} rows × ${room.benches_per_row} benches`}</span>
-                        <span className="text-gray-300">•</span>
-                        <span>{`Capacity: ${room.capacity} seats (${room.seats_per_bench}/bench)`}</span>
+                        <span>{`${room.rows_count} rows × ${room.benches_per_row} benches`}</span>
+                        <span className="text-gray-300 hidden sm:inline">•</span>
+                        <span>{`${room.capacity} seats (${room.seats_per_bench}/bench)`}</span>
                       </div>
                     </div>
 
-                    {/* Capacity Info (total seats only) */}
                     <div className="flex flex-col gap-1">
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-gray-500 font-semibold">Total Seats</span>
@@ -415,7 +386,6 @@ onClick={() =>
                       </div>
                     </div>
 
-                    {/* Room Actions */}
                     <div className="flex justify-end gap-3 mt-1 pt-3 border-t border-gray-100">
                       <button
                         onClick={(e) => {
@@ -424,7 +394,7 @@ onClick={() =>
                         }}
                         className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-[11px] font-bold uppercase cursor-pointer"
                       >
-                        Edit Plan
+                        Edit
                       </button>
                       <button
                         onClick={(e) => {
@@ -445,11 +415,11 @@ onClick={() =>
         </div>
       )}
 
-      {/* ADD ROOM MODAL DIALOG */}
+      {/* ADD ROOM MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md border border-gray-200 shadow-2xl mx-4">
-            <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide mb-4">Create New Classroom Blueprint</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl p-4 md:p-6 w-full max-w-md border border-gray-200 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide mb-4">Create New Classroom</h3>
             
             <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
               <div>
@@ -466,7 +436,7 @@ onClick={() =>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Rows (Rows of Benches)</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Rows</label>
                   <input
                     type="number"
                     min="1"
@@ -478,7 +448,7 @@ onClick={() =>
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Benches Per Row</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Benches/Row</label>
                   <input
                     type="number"
                     min="1"
@@ -490,7 +460,7 @@ onClick={() =>
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Seats Per Bench</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Seats/Bench</label>
                   <input
                     type="number"
                     min="1"
@@ -503,7 +473,6 @@ onClick={() =>
                 </div>
               </div>
 
-              {/* Dynamic Capacity Stats */}
               <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
                 <span className="text-gray-500 font-semibold">Total Seats Generated</span>
                 <span className="font-mono font-bold text-indigo-600 text-sm">{calculatedCapacity} Seats</span>
@@ -529,10 +498,10 @@ onClick={() =>
         </div>
       )}
 
-      {/* EDIT ROOM MODAL DIALOG */}
+      {/* EDIT ROOM MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md border border-gray-200 shadow-2xl mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl p-4 md:p-6 w-full max-w-md border border-gray-200 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wide mb-4">Edit Classroom Blueprint</h3>
             
             <form onSubmit={handleUpdateRoom} className="flex flex-col gap-4">
@@ -549,7 +518,7 @@ onClick={() =>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Rows (Of Benches)</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Rows</label>
                   <input
                     type="number"
                     min="1"
@@ -561,7 +530,7 @@ onClick={() =>
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Benches Per Row</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Benches/Row</label>
                   <input
                     type="number"
                     min="1"
@@ -573,7 +542,7 @@ onClick={() =>
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Seats Per Bench</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">Seats/Bench</label>
                   <input
                     type="number"
                     min="1"
@@ -586,7 +555,6 @@ onClick={() =>
                 </div>
               </div>
 
-              {/* Dynamic Capacity Stats */}
               <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
                 <span className="text-gray-500 font-semibold">Total Seats Generated</span>
                 <span className="font-mono font-bold text-indigo-600 text-sm">{calculatedCapacity} Seats</span>

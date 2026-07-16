@@ -89,10 +89,7 @@ const LoginForm = () => {
     };
 
     return (
-        /* The main outer frame spans full dimensions overlaying your background */
         <div style={styles.pageOverlayWrapper}>
-            
-            {/* Left side viewport column acting as the anchor box */}
             <div style={styles.leftFormColumn}>
                 <div style={styles.formCard}>
                     <h2 style={styles.brandTitle}>
@@ -100,7 +97,6 @@ const LoginForm = () => {
                     </h2>
                     
                     <form onSubmit={handleSubmit}>
-                        {/* USERNAME FIELD */}
                         <div style={styles.fieldGroup}>
                             <label htmlFor="Username" style={styles.fieldLabel}>
                                 <FontAwesomeIcon icon={faUser} style={styles.fieldIcon} />
@@ -118,13 +114,11 @@ const LoginForm = () => {
                             />
                         </div>
 
-                        {/* PASSWORD FIELD */}
                         <div style={styles.fieldGroup}>
                             <label htmlFor="Password" style={styles.fieldLabel}>
                                 <FontAwesomeIcon icon={faLock} style={styles.fieldIcon} />
                                 Password
                             </label>
-
                             <div style={styles.passwordWrapper}>
                                 <input
                                     id="Password"
@@ -136,7 +130,6 @@ const LoginForm = () => {
                                     placeholder="Enter your password"
                                     required
                                 />
-
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -146,7 +139,7 @@ const LoginForm = () => {
                                 </button>
                             </div>
                         </div>
-                        {/* SUBMIT */}
+
                         <div style={styles.actionWrapper}>
                             <button type="submit" style={styles.primarySubmitBtn}>
                                 Login
@@ -162,13 +155,11 @@ const LoginForm = () => {
                 </div>
             </div>
 
-            {/* Right empty spacer area to allow background art to stay visible */}
             <div style={styles.rightSpacerColumn} />
         </div>
     );
 };
 
-// CLEAN ALIGNED STYLING HOOKS
 const styles = {
     pageOverlayWrapper: {
         display: "flex",
@@ -178,8 +169,8 @@ const styles = {
     },
     leftFormColumn: {
         width: "100%",
-        maxWidth: "420px", /* Beautifully thin card profile width */
-        backgroundColor: "rgba(255, 255, 255, 0.96)", /* Subtle premium opaque white overlay */
+        maxWidth: "420px",
+        backgroundColor: "rgba(255, 255, 255, 0.96)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -190,10 +181,11 @@ const styles = {
     },
     rightSpacerColumn: {
         flex: 1,
-        display: "block", /* Keeps the right side empty so background asset isn't hidden */
+        display: "block",
     },
     formCard: {
         width: "100%",
+        maxWidth: "100%",
     },
     brandTitle: {
         fontSize: "32px",
@@ -229,7 +221,7 @@ const styles = {
         padding: "12px 16px",
         border: "1px solid #D1D5DB",
         borderRadius: "8px",
-        fontSize: "14px",
+        fontSize: "16px",
         color: "#1F2937",
         outline: "none",
         backgroundColor: "#FFFFFF",
@@ -243,7 +235,7 @@ const styles = {
         padding: "12px 45px 12px 16px",
         border: "1px solid #D1D5DB",
         borderRadius: "8px",
-        fontSize: "14px",
+        fontSize: "16px",
         color: "#1F2937",
         outline: "none",
         backgroundColor: "#FFFFFF",
@@ -272,7 +264,7 @@ const styles = {
         borderRadius: "8px",
         border: "none",
         cursor: "pointer",
-        fontSize: "15px",
+        fontSize: "16px",
         boxShadow: "0 4px 12px rgba(147, 51, 234, 0.2)",
     },
     supportLinkCenter: {
@@ -296,5 +288,25 @@ const styles = {
         fontWeight: 600,
     },
 };
+
+// Add responsive styles via media query injection
+if (typeof window !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = `
+    @media (max-width: 640px) {
+      div[style*="maxWidth: 420px"] {
+        max-width: 100% !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        backdrop-filter: blur(12px) !important;
+        background-color: rgba(255, 255, 255, 0.98) !important;
+      }
+      div[style*="flex: 1"] {
+        display: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default LoginForm;

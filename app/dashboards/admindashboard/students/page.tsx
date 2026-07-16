@@ -26,7 +26,7 @@ export default function StudentsManagement() {
   const [loading, setLoading] = useState(true);
 
   // Inline Editing States
-  const [editingId, setEditingId] = useState<string | null>(null); // ✅ Tracks string references
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editRoll, setEditRoll] = useState("");
 
@@ -298,21 +298,21 @@ const fetchBatches = async () => {
 
     return s.batch?.toLowerCase() === currentBatchView.toLowerCase() && matchesSearchTerm;
   }).sort((a, b) => {
-    // ✅ Automatically sort students numerically by their Roll ID Number
     const rollA = parseInt(a.roll, 10) || 0;
     const rollB = parseInt(b.roll, 10) || 0;
     return rollA - rollB;
   });
+
   return (
-    <div className="p-8 flex flex-col gap-6 w-full max-w-[1400px] mx-auto">
+    <div className="p-4 md:p-8 flex flex-col gap-6 w-full max-w-[1400px] mx-auto">
       
       {/* HEADER CONTROLS BAR WITH INTEGRATED SCOPE SELECTOR */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-sm">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-lg font-extrabold tracking-tight text-gray-900 uppercase m-0">Student Directory Control System</h2>
-            <div className="flex items-center gap-2 border border-indigo-100 bg-indigo-50/40 px-3 py-1 rounded-xl">
-              <span className="text-[11px] font-bold text-indigo-600 uppercase font-mono">Scope Filter:</span>
+      <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 shadow-sm">
+        <div className="min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+            <h2 className="text-base md:text-lg font-extrabold tracking-tight text-gray-900 uppercase m-0">Student Directory</h2>
+            <div className="flex items-center gap-2 border border-indigo-100 bg-indigo-50/40 px-3 py-1 rounded-xl w-fit">
+              <span className="text-[11px] font-bold text-indigo-600 uppercase font-mono">Scope:</span>
               <select 
                 value={currentBatchView} 
                 onChange={(e) => setCurrentBatchView(e.target.value)} 
@@ -324,23 +324,24 @@ const fetchBatches = async () => {
               </select>
             </div>
           </div>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">Currently targeting batch pool <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView || "None"}</span>.</p>
+          <p className="text-xs text-gray-400 font-medium mt-0.5">Targeting batch <span className="font-mono font-bold text-[#4F46E5] bg-indigo-50 px-1.5 py-0.5 rounded">{currentBatchView || "None"}</span></p>
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
           <button 
             onClick={handlePurgeEntireBatch}
             disabled={!currentBatchView}
-            className="bg-[#E11D48] hover:bg-[#BE123C] disabled:bg-gray-300 text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
+            className="bg-[#E11D48] hover:bg-[#BE123C] disabled:bg-gray-300 text-white text-xs font-bold px-4 md:px-5 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95 h-11"
           >
-            💥 Wipe Entire {currentBatchView || "Batch"} List
+            💥 Wipe Batch
           </button>
 
           <label 
             htmlFor="excel-upload-trigger" 
-            className={`bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11 ${!currentBatchView ? "pointer-events-none opacity-50" : ""}`}
+            className={`bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-4 md:px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11 ${!currentBatchView ? "pointer-events-none opacity-50" : ""}`}
           >
-            <span>📊 Bulk Parse Students into {currentBatchView || "Batch"}</span>
+            <span className="hidden sm:inline">📊 Bulk Upload</span>
+            <span className="sm:hidden">📊 Upload</span>
             <input 
               id="excel-upload-trigger" 
               type="file" 
@@ -356,8 +357,8 @@ const fetchBatches = async () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* MANUAL MANIPULATION PANEL */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-4 shadow-sm">
-          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add New Student to {currentBatchView || "Directory"}</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 lg:col-span-4 shadow-sm">
+          <h3 className="text-xs font-extrabold text-gray-400 tracking-wider uppercase mb-5">Add Student to {currentBatchView || "Directory"}</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-2">Full Student Name</label>
@@ -389,27 +390,27 @@ const fetchBatches = async () => {
         </div>
 
         {/* LIVE DATA DIRECTORY CONTAINER */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-8 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 lg:col-span-8 shadow-sm overflow-hidden">
           <div className="relative mb-6">
             <span className="absolute inset-y-0 left-4 flex items-center text-gray-400 text-sm">🔍</span>
             <input 
               type="text" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
-              placeholder='Search within active batch, or enter cross-query (e.g. "CS-2020 20")...' 
+              placeholder='Search within batch (e.g. "CS-2020 20")...' 
               className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-700 focus:outline-none focus:border-indigo-500 bg-gray-50/30 font-medium" 
             />
           </div>
 
           <div className="overflow-x-auto border border-gray-200 rounded-xl">
-            <table className="w-full border-collapse text-left text-sm bg-white">
+            <table className="w-full border-collapse text-left text-sm bg-white min-w-[600px]">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/70 text-gray-500 font-bold text-xs uppercase tracking-wider">
-                  <th className="p-4 text-center w-16">S.N.</th>
-                  <th className="p-4">Name Parameters</th>
-                  <th className="p-4">Roll Reference</th>
-                  <th className="p-4">Batch Link</th>
-                  <th className="p-4 text-center w-[380px]">Actions</th>
+                  <th className="p-3 md:p-4 text-center w-12 md:w-16">S.N.</th>
+                  <th className="p-3 md:p-4">Name</th>
+                  <th className="p-3 md:p-4">Roll</th>
+                  <th className="p-3 md:p-4">Batch</th>
+                  <th className="p-3 md:p-4 text-center min-w-[280px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700 font-medium">
@@ -418,10 +419,9 @@ const fetchBatches = async () => {
                 ) : filteredStudents.length > 0 ? (
                   filteredStudents.map((student, index) => (
                     <tr key={student.id} className="hover:bg-gray-50/40 transition-colors">
-                      {/* ✅ FORCE EXACT POSITIONAL INDEX: This guarantees rendering 1, 2, 3... */}
-                      <td className="p-4 text-center text-gray-400 font-normal">{index + 1}</td>
+                      <td className="p-3 md:p-4 text-center text-gray-400 font-normal">{index + 1}</td>
                       
-                      <td className="p-4 font-bold text-gray-900">
+                      <td className="p-3 md:p-4 font-bold text-gray-900">
                         {editingId === student.id ? (
                           <input 
                             type="text" 
@@ -430,11 +430,11 @@ const fetchBatches = async () => {
                             className="border border-indigo-400 px-2 py-1 rounded-md text-sm w-full font-normal"
                           />
                         ) : (
-                          student.name
+                          <span className="break-words">{student.name}</span>
                         )}
                       </td>
                       
-                      <td className="p-4 text-gray-600 font-mono">
+                      <td className="p-3 md:p-4 text-gray-600 font-mono">
                         {editingId === student.id ? (
                           <input 
                             type="text" 
@@ -447,12 +447,12 @@ const fetchBatches = async () => {
                         )}
                       </td>
                       
-                      <td className="p-4">
+                      <td className="p-3 md:p-4">
                         <span className="px-2.5 py-1 text-xs font-bold font-mono text-indigo-600 border border-indigo-200 rounded-md bg-indigo-50/40">{student.batch}</span>
                       </td>
                       
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-3 whitespace-nowrap">
+                      <td className="p-3 md:p-4">
+                        <div className="flex items-center justify-center gap-2 md:gap-3 whitespace-nowrap">
               
                         {editingId === student.id ? (
                           <>
@@ -468,16 +468,17 @@ const fetchBatches = async () => {
                               Edit
                             </button>
 
-                            <span>|</span>
+                            <span className="hidden sm:inline">|</span>
 
                             <button
                               onClick={() => viewPassword(student.username)}
                               className="text-green-600 text-xs font-bold hover:underline"
                             >
-                              View Password
+                              <span className="hidden sm:inline">View Password</span>
+                              <span className="sm:hidden">Pass</span>
                             </button>
 
-                            <span>|</span>
+                            <span className="hidden sm:inline">|</span>
 
                             <button
                               onClick={() => resetPassword(student.username)}
@@ -486,7 +487,7 @@ const fetchBatches = async () => {
                               Reset
                             </button>
 
-                            <span>|</span>
+                            <span className="hidden sm:inline">|</span>
 
                             <button
                               onClick={() => handlePurgeRecord(student.roll, student.batch)}
