@@ -239,6 +239,33 @@ async def upload_routine(
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=400, detail=str(e))
+@router.delete("/batch/{batch_name}")
+async def delete_routines_by_batch(batch_name: str):
+    try:
+        with get_raw_db() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                DELETE FROM exam_routines
+                WHERE batch_name=%s;
+                """,
+                (batch_name,)
+            )
+
+            deleted_count = cursor.rowcount
+            conn.commit()
+            cursor.close()
+
+        return {
+            "message": f"Deleted {deleted_count} routine entries for batch '{batch_name}'."
+        }
+
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/sessions")
 def get_sessions():
     with get_raw_db() as conn:

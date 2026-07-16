@@ -9,6 +9,9 @@ export default function AdminRoutinePage() {
   const [batch, setBatch] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deleteBatch, setDeleteBatch] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [routineCount, setRoutineCount] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +78,56 @@ export default function AdminRoutinePage() {
     }
 
     setLoading(false);
+  };
+
+  // Fetch routine count for the batch selected in delete section
+  useEffect(() => {
+    if (!deleteBatch) {
+      setRoutineCount(null);
+      return;
+    }
+
+    fetch(`${API}/api/routines?batch=${encodeURIComponent(deleteBatch)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRoutineCount(Array.isArray(data) ? data.length : 0);
+      })
+      .catch(() => setRoutineCount(0));
+  }, [deleteBatch]);
+
+  const deleteRoutine = async () => {
+    if (!deleteBatch) {
+      alert("Please select a batch.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the entire exam routine for "${deleteBatch}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+
+    try {
+      const res = await fetch(
+        `${API}/api/routines/batch/${encodeURIComponent(deleteBatch)}`,
+        { method: "DELETE" }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message);
+        setRoutineCount(0);
+      } else {
+        alert(data.detail || "Failed to delete routine.");
+      }
+    } catch {
+      alert("Network Error");
+    }
+
+    setDeleting(false);
   };
 
   return (
@@ -198,6 +251,80 @@ export default function AdminRoutinePage() {
               ? "Uploading..."
               : "Upload and Process Excel"}
           </button>
+
+        </div>
+
+        {/* Delete Routine Card */}
+
+        <div className="bg-white rounded-3xl border border-red-200 shadow-md max-w-3xl mx-auto mt-8 md:mt-10 p-6 md:p-10">
+
+          <h2 className="text-xl md:text-2xl font-extrabold text-red-700 uppercase mb-6">
+            Delete Examination Routine
+          </h2>
+
+          {/* Delete Batch Select */}
+
+          <div>
+
+            <label className="block text-sm font-bold text-gray-700 uppercase mb-3">
+              Select Batch to Delete
+            </label>
+
+            <select
+              value={deleteBatch}
+              onChange={(e) => {
+                setDeleteBatch(e.target.value);
+              }}
+              className="w-full border rounded-xl px-4 py-3 md:py-4 text-base md:text-lg focus:ring-2 focus:ring-red-500 outline-none text-black font-semibold"
+            >
+              <option value="">-- Select a Batch --</option>
+              {batches.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          {/* Info & Delete Button */}
+
+          {deleteBatch && (
+            <div className="mt-6 bg-red-50 rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+
+              <div>
+
+                <p className="text-sm md:text-base text-gray-700">
+                  <span className="font-semibold">Batch:</span> {deleteBatch}
+                </p>
+
+                <p className="text-sm md:text-base text-gray-700 mt-1">
+                  <span className="font-semibold">Routine Entries:</span>{" "}
+                  {routineCount === null ? (
+                    <span className="text-gray-400">Loading...</span>
+                  ) : (
+                    <span className={routineCount > 0 ? "text-red-600 font-bold" : "text-green-600 font-bold"}>
+                      {routineCount}
+                    </span>
+                  )}
+                </p>
+
+              </div>
+
+              <button
+                onClick={deleteRoutine}
+                disabled={deleting || routineCount === 0 || routineCount === null}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base shrink-0"
+              >
+                {deleting
+                  ? "Deleting..."
+                  : routineCount === 0 && routineCount !== null
+                  ? "No Entries"
+                  : "Delete Routine"}
+              </button>
+
+            </div>
+          )}
 
         </div>
 
