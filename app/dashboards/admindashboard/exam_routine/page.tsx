@@ -144,39 +144,15 @@ export default function AdminRoutinePage() {
 
         </div>
 
-        {/* Template Download Section */}
-
-        <div className="bg-white rounded-3xl border border-blue-200 shadow-md max-w-3xl mx-auto mt-8 md:mt-10 p-6 md:p-10">
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-
-            <div className="text-5xl md:text-6xl">
-              📋
-            </div>
-
-            <div className="flex-1">
-
-              <h2 className="text-xl md:text-2xl font-extrabold text-[#1f2940]">
-                Download Routine Template
-              </h2>
-
-              <p className="mt-2 text-gray-600 text-sm md:text-base">
-                Download the template with the exact column names required. Fill in your data and upload it back.
-              </p>
-
-            </div>
-
-            <a
-              href={`${API}/api/routines/template`}
-              download
-              className="inline-flex items-center gap-2 bg-[#5668f5] hover:bg-[#4055eb] transition text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base shrink-0"
-            >
-              <span>📥</span>
-              <span>Download Template</span>
-            </a>
-
-          </div>
-
+        {/* Template Download Link */}
+        <div className="max-w-3xl mx-auto mt-6 flex justify-end">
+          <a
+            href={`${API}/api/routines/template`}
+            download
+            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg transition"
+          >
+            📥 Download Excel Template
+          </a>
         </div>
 
         {/* Upload Card */}

@@ -336,6 +336,14 @@ const fetchBatches = async () => {
             💥 Wipe Batch
           </button>
 
+          <a
+            href={`${apiBaseUrl}/api/students/template`}
+            download
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg transition whitespace-nowrap h-11"
+          >
+            📥 Template
+          </a>
+
           <label 
             htmlFor="excel-upload-trigger" 
             className={`bg-[#00875A] hover:bg-[#006B44] text-white text-xs font-bold px-4 md:px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none transition-all active:scale-95 h-11 ${!currentBatchView ? "pointer-events-none opacity-50" : ""}`}

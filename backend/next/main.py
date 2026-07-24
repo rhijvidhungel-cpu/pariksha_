@@ -202,6 +202,43 @@ def resolve_academic_keys(cursor, batch_name: str):
         
     return dept_id, batch_id
 
+@app.get("/api/students/template")
+async def download_student_template():
+    """Download a sample Excel template for bulk student upload with the exact columns required."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    import io
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Student Upload Template"
+
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    header_fill = PatternFill(start_color="00875A", end_color="00875A", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
+
+    headers = ["Full Name", "Roll Number", "Target Batch"]
+    for col_idx, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font = header_font; cell.fill = header_fill; cell.alignment = header_alignment; cell.border = thin_border
+
+    sample_data = ["Ramesh Poudel", "45", "CS-2023"]
+    for col_idx, value in enumerate(sample_data, 1):
+        cell = ws.cell(row=2, column=col_idx, value=value)
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = thin_border
+
+    ws.column_dimensions["A"].width = 25; ws.column_dimensions["B"].width = 18; ws.column_dimensions["C"].width = 20
+
+    output = io.BytesIO()
+    wb.save(output); output.seek(0)
+
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=student_upload_template.xlsx"})
+
+
 @app.post("/api/students/bulk")
 async def bulk_excel_upload(file: UploadFile = File(...), batch: str = Form(...)):
     contents = await file.read()
