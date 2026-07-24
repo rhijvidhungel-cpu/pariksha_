@@ -157,7 +157,7 @@ export default function AdminRoutinePage() {
             <div className="flex-1">
 
               <h2 className="text-xl md:text-2xl font-extrabold text-[#1f2940]">
-                Need the correct format?
+                Download Routine Template
               </h2>
 
               <p className="mt-2 text-gray-600 text-sm md:text-base">
