@@ -143,6 +143,9 @@ def normalize_time(time_val):
     # Normalize spaces after AM/PM: "10:00AM" -> "10:00 AM"
     s = re.sub(r'(\d)([AaPp][Mm])', r'\1 \2', s)
     
+    # Uppercase AM/PM so "am" / "pm" both become "AM" / "PM"
+    s = re.sub(r'([AaPp][Mm])', lambda m: m.group(1).upper(), s)
+    
     # Collapse multiple spaces
     s = re.sub(r'\s+', ' ', s)
     
@@ -289,6 +292,64 @@ async def delete_routines_by_batch(batch_name: str):
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/template")
+async def download_template():
+    """
+    Download a sample Excel template with the correct column headers
+    so admins can fill in data without breaking the format.
+    """
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Exam Routine Template"
+
+    # Header styling
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    header_fill = PatternFill(start_color="5668F5", end_color="5668F5", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    headers = ["Date", "Subject", "Code", "Time"]
+    for col_idx, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+
+    # Sample row
+    sample_data = ["2026-08-15", "Mathematics", "MATH101", "10:00 AM - 12:00 PM"]
+    for col_idx, value in enumerate(sample_data, 1):
+        cell = ws.cell(row=2, column=col_idx, value=value)
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = thin_border
+
+    # Set column widths
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 25
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 30
+
+    # Save to BytesIO
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=exam_routine_template.xlsx"},
+    )
 
 
 @router.get("/sessions")
