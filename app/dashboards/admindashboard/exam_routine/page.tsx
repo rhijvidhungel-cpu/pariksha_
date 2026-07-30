@@ -438,10 +438,10 @@ export default function AdminRoutinePage() {
                       {viewRoutines.map((entry, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
                           <td className="p-4 font-bold text-indigo-600">{idx + 1}</td>
-                          <td className="p-4 font-medium">{entry.Date}</td>
-                          <td className="p-4 text-gray-600">{entry.Time || "—"}</td>
-                          <td className="p-4 font-medium">{entry.Subject}</td>
-                          <td className="p-4 font-mono text-gray-500">{entry.Code}</td>
+                          <td className="p-4 font-medium text-gray-900">{entry.Date}</td>
+                          <td className="p-4 text-gray-700">{entry.Time || "—"}</td>
+                          <td className="p-4 font-medium text-gray-900">{entry.Subject}</td>
+                          <td className="p-4 font-mono text-gray-700">{entry.Code}</td>
                         </tr>
                       ))}
                     </tbody>
