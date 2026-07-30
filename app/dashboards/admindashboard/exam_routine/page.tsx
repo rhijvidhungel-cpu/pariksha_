@@ -2,9 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function AdminRoutinePage() {
-  const API = "https://pariksha-9qjs.onrender.com";
+const API = "https://pariksha-9qjs.onrender.com";
 
+interface RoutineEntry {
+  Date: string;
+  Time: string;
+  Subject: string;
+  Code: string;
+}
+
+export default function AdminRoutinePage() {
   const [batches, setBatches] = useState<string[]>([]);
   const [batch, setBatch] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -12,6 +19,11 @@ export default function AdminRoutinePage() {
   const [deleteBatch, setDeleteBatch] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [routineCount, setRoutineCount] = useState<number | null>(null);
+
+  // View routine modal
+  const [viewRoutines, setViewRoutines] = useState<RoutineEntry[]>([]);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,6 +107,29 @@ export default function AdminRoutinePage() {
       .catch(() => setRoutineCount(0));
   }, [deleteBatch]);
 
+  const viewRoutine = async () => {
+    if (!deleteBatch) {
+      alert("Please select a batch.");
+      return;
+    }
+
+    setViewLoading(true);
+    setViewRoutines([]);
+    setShowModal(true);
+
+    try {
+      const res = await fetch(
+        `${API}/api/routines?batch=${encodeURIComponent(deleteBatch)}`
+      );
+      const data = await res.json();
+      setViewRoutines(Array.isArray(data) ? data : []);
+    } catch {
+      setViewRoutines([]);
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   const deleteRoutine = async () => {
     if (!deleteBatch) {
       alert("Please select a batch.");
@@ -120,6 +155,7 @@ export default function AdminRoutinePage() {
       if (res.ok) {
         alert(data.message);
         setRoutineCount(0);
+        setViewRoutines([]);
       } else {
         alert(data.detail || "Failed to delete routine.");
       }
@@ -298,7 +334,7 @@ export default function AdminRoutinePage() {
 
           </div>
 
-          {/* Info & Delete Button */}
+          {/* Info & Action Buttons */}
 
           {deleteBatch && (
             <div className="mt-6 bg-red-50 rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -322,17 +358,27 @@ export default function AdminRoutinePage() {
 
               </div>
 
-              <button
-                onClick={deleteRoutine}
-                disabled={deleting || routineCount === 0 || routineCount === null}
-                className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base shrink-0"
-              >
-                {deleting
-                  ? "Deleting..."
-                  : routineCount === 0 && routineCount !== null
-                  ? "No Entries"
-                  : "Delete Routine"}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={viewRoutine}
+                  disabled={routineCount === null || routineCount === 0}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 transition text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base shrink-0"
+                >
+                  View Routine
+                </button>
+
+                <button
+                  onClick={deleteRoutine}
+                  disabled={deleting || routineCount === 0 || routineCount === null}
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base shrink-0"
+                >
+                  {deleting
+                    ? "Deleting..."
+                    : routineCount === 0 && routineCount !== null
+                    ? "No Entries"
+                    : "Delete Routine"}
+                </button>
+              </div>
 
             </div>
           )}
@@ -340,6 +386,83 @@ export default function AdminRoutinePage() {
         </div>
 
       </div>
+
+      {/* View Routine Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-200 shrink-0">
+              <div>
+                <h3 className="text-xl md:text-2xl font-extrabold text-[#1f2940]">
+                  Exam Routine — {deleteBatch}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {viewLoading
+                    ? "Loading..."
+                    : `${viewRoutines.length} entry(ies)`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-700 text-3xl leading-none ml-4"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-auto p-6 md:p-8">
+              {viewLoading ? (
+                <div className="text-center py-12 text-gray-400 text-lg font-semibold">
+                  Loading routine...
+                </div>
+              ) : viewRoutines.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-lg font-semibold">
+                  No routine entries found for this batch.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-[#2E1A47] text-white">
+                        <th className="p-4 font-bold">S.No</th>
+                        <th className="p-4 font-bold">Date</th>
+                        <th className="p-4 font-bold">Time</th>
+                        <th className="p-4 font-bold">Subject</th>
+                        <th className="p-4 font-bold">Code</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {viewRoutines.map((entry, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="p-4 font-bold text-indigo-600">{idx + 1}</td>
+                          <td className="p-4 font-medium">{entry.Date}</td>
+                          <td className="p-4 text-gray-600">{entry.Time || "—"}</td>
+                          <td className="p-4 font-medium">{entry.Subject}</td>
+                          <td className="p-4 font-mono text-gray-500">{entry.Code}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 md:px-8 py-4 border-t border-gray-200 flex justify-end shrink-0">
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-6 py-3 rounded-xl text-sm transition"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
 
