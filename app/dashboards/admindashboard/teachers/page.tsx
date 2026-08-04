@@ -137,6 +137,59 @@ export default function TeachersManagement() {
     }
   };
 
+  const viewPassword = async (email: string) => {
+    try {
+      const res = await fetch(`${API_ROOT}/password/${email}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`Temporary Password:\n\n${data.temporary_password}`);
+      } else {
+        alert(data.detail || "Failed to retrieve temporary password.");
+      }
+    } catch (err: unknown) {
+      setStatusMsg({
+        type: "error",
+        text: getErrorMessage(err, "Failed to retrieve teacher password."),
+      });
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    if (!confirm(`Reset password for teacher (${email})?`)) return;
+
+    try {
+      const res = await fetch(`${API_ROOT}/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatusMsg({
+          type: "success",
+          text: `Password reset successfully. Temporary password: ${data.temporary_password}`,
+        });
+      } else {
+        setStatusMsg({
+          type: "error",
+          text: data.detail || "Failed to reset teacher password.",
+        });
+      }
+    } catch (err: unknown) {
+      setStatusMsg({
+        type: "error",
+        text: getErrorMessage(err, "Failed to reset teacher password."),
+      });
+    }
+  };
+
   const startEdit = (teacher: Teacher) => {
     setEditingTeacher(teacher);
     setEditName(teacher.name);
@@ -318,7 +371,7 @@ export default function TeachersManagement() {
                   <th className="py-3 px-3 md:px-4">Faculty Name</th>
                   <th className="py-3 px-3 md:px-4">Email / Username</th>
                   <th className="py-3 px-3 md:px-4">Department</th>
-                  <th className="py-3 px-3 md:px-4 text-center w-[120px]">Actions</th>
+                  <th className="py-3 px-3 md:px-4 text-center min-w-[280px]">Actions</th>
                 </tr>
               </thead>
 
@@ -347,13 +400,29 @@ export default function TeachersManagement() {
                         </span>
                       </td>
                       <td className="py-3 px-3 md:px-4 text-center">
-                        <div className="flex justify-center gap-2 md:gap-3">
+                        <div className="flex justify-center gap-2 md:gap-3 whitespace-nowrap">
                           <button
                             onClick={() => startEdit(teacher)}
                             className="bg-transparent border-none text-indigo-600 hover:text-indigo-900 text-xs font-extrabold cursor-pointer uppercase"
                           >
                             Edit
                           </button>
+                          <span className="hidden sm:inline text-gray-300">|</span>
+                          <button
+                            onClick={() => viewPassword(teacher.email)}
+                            className="bg-transparent border-none text-green-600 hover:text-green-800 text-xs font-extrabold cursor-pointer uppercase"
+                          >
+                            <span className="hidden sm:inline">Pass</span>
+                            <span className="sm:hidden">🔑</span>
+                          </button>
+                          <span className="hidden sm:inline text-gray-300">|</span>
+                          <button
+                            onClick={() => resetPassword(teacher.email)}
+                            className="bg-transparent border-none text-orange-600 hover:text-orange-800 text-xs font-extrabold cursor-pointer uppercase"
+                          >
+                            Reset
+                          </button>
+                          <span className="hidden sm:inline text-gray-300">|</span>
                           <button
                             onClick={() => handleRemoveTeacher(teacher.id)}
                             className="bg-transparent border-none text-red-500 hover:text-red-700 text-xs font-extrabold cursor-pointer uppercase"
