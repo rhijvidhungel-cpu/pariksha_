@@ -210,9 +210,40 @@ def delete_department(department_id: int):
                     detail="Delete or move all batches before removing this department.",
                 )
 
+            # Delete orphaned students (and their user accounts) that reference this
+            # department directly but have no batch here. These were created by legacy
+            # code that derived departments from batch name prefixes.
+            cursor.execute(
+                "SELECT user_id FROM students WHERE department_id = %s;",
+                (department_id,),
+            )
+            orphan_user_ids = [
+                safe_get_field(r, "user_id", 0)
+                for r in cursor.fetchall()
+                if safe_get_field(r, "user_id", 0)
+            ]
+
+            if orphan_user_ids:
+                cursor.execute(
+                    "DELETE FROM students WHERE department_id = %s;",
+                    (department_id,),
+                )
+                format_strings = ",".join(["%s"] * len(orphan_user_ids))
+                cursor.execute(
+                    f"DELETE FROM users WHERE user_id IN ({format_strings});",
+                    tuple(orphan_user_ids),
+                )
+
             cursor.execute("DELETE FROM departments WHERE department_id = %s;", (department_id,))
             conn.commit()
-            return {"success": True, "message": "Department deleted successfully."}
+            return {
+                "success": True,
+                "message": (
+                    "Department deleted successfully."
+                    if not orphan_user_ids
+                    else f"Department deleted. {len(orphan_user_ids)} orphaned student account(s) removed."
+                ),
+            }
         except HTTPException:
             conn.rollback()
             raise
