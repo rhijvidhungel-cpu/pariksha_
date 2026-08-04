@@ -179,6 +179,17 @@ def get_batches():
 
 def resolve_academic_keys(cursor, batch_name: str):
     """Handles and establishes clean foreign key associations inside relational schemes."""
+    # First check if the batch already exists — if so, reuse its existing department
+    # instead of deriving a new department from the batch name prefix.
+    cursor.execute("SELECT batch_id, department_id FROM batches WHERE batch_name = %s;", (batch_name,))
+    batch = cursor.fetchone()
+    batch_id = safe_get_field(batch, 'batch_id', 0)
+    existing_dept_id = safe_get_field(batch, 'department_id', 1)
+
+    if batch_id and existing_dept_id:
+        return existing_dept_id, batch_id
+
+    # Batch doesn't exist yet — derive department from the batch name prefix.
     dept_name = batch_name.split('-')[0] if '-' in batch_name else "GENERIC"
     
     cursor.execute("SELECT department_id FROM departments WHERE department_name = %s;", (dept_name,))
@@ -189,10 +200,6 @@ def resolve_academic_keys(cursor, batch_name: str):
         cursor.execute("INSERT INTO departments (department_name) VALUES (%s) RETURNING department_id;", (dept_name,))
         dept_id = safe_get_field(cursor.fetchone(), 'department_id', 0)
 
-    cursor.execute("SELECT batch_id FROM batches WHERE batch_name = %s;", (batch_name,))
-    batch = cursor.fetchone()
-    batch_id = safe_get_field(batch, 'batch_id', 0)
-    
     if not batch_id:
         cursor.execute(
             "INSERT INTO batches (batch_name, department_id) VALUES (%s, %s) RETURNING batch_id;", 
